@@ -1,0 +1,90 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "team_a": "Meksiko",
+    "team_b": "Kanada",
+    "match_time": "2026-06-11T18:00:00Z",
+    "stage": "Fase Grup - Grup A",
+    "status": "completed",
+    "score_a": 2,
+    "score_b": 1,
+    "stadium": "Estadio Azteca, Mexico City"
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "team_a": "Amerika Serikat",
+    "team_b": "Bolivia",
+    "match_time": "2026-06-12T20:00:00Z",
+    "stage": "Fase Grup - Grup B",
+    "status": "completed",
+    "score_a": 3,
+    "score_b": 0,
+    "stadium": "SoFi Stadium, Los Angeles"
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "team_a": "Argentina",
+    "team_b": "Arab Saudi",
+    "match_time": "2026-06-15T15:00:00Z",
+    "stage": "Fase Grup - Grup C",
+    "status": "second_half",
+    "score_a": 2,
+    "score_b": 1,
+    "stadium": "MetLife Stadium, East Rutherford"
+  },
+  {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "team_a": "Prancis",
+    "team_b": "Australia",
+    "match_time": "2026-06-16T18:00:00Z",
+    "stage": "Fase Grup - Grup D",
+    "status": "half_time",
+    "score_a": 0,
+    "score_b": 0,
+    "stadium": "Mercedes-Benz Stadium, Atlanta"
+  },
+  {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "team_a": "Brasil",
+    "team_b": "Kamerun",
+    "match_time": "2026-06-17T21:00:00Z",
+    "stage": "Fase Grup - Grup G",
+    "status": "scheduled",
+    "score_a": null,
+    "score_b": null,
+    "stadium": "AT&T Stadium, Dallas"
+  },
+  {
+    "id": "66666666-6666-6666-6666-666666666666",
+    "team_a": "Jerman",
+    "team_b": "Jepang",
+    "match_time": "2026-06-18T14:00:00Z",
+    "stage": "Fase Grup - Grup E",
+    "status": "scheduled",
+    "score_a": null,
+    "score_b": null,
+    "stadium": "BC Place, Vancouver"
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777777",
+    "team_a": "Spanyol",
+    "team_b": "Kosta Rika",
+    "match_time": "2026-06-19T17:00:00Z",
+    "stage": "Fase Grup - Grup F",
+    "status": "scheduled",
+    "score_a": null,
+    "score_b": null,
+    "stadium": "Lumen Field, Seattle"
+  },
+  {
+    "id": "88888888-8888-8888-8888-888888888888",
+    "team_a": "Inggris",
+    "team_b": "Iran",
+    "match_time": "2026-06-20T19:00:00Z",
+    "stage": "Fase Grup - Grup H",
+    "status": "first_half",
+    "score_a": 1,
+    "score_b": 0,
+    "stadium": "Hard Rock Stadium, Miami"
+  }
+]
