@@ -27,6 +27,7 @@ interface LeaderboardEntry {
   totalGuesses: number;
   totalWins: number;
   totalWinnings: number;
+  netWinnings: number;
 }
 
 export default function LeaderboardPage() {
@@ -113,23 +114,26 @@ export default function LeaderboardPage() {
             }
           });
 
+          const netWinnings = totalWinnings - (userPredictions.length * 10000);
+
           return {
             profileId: profile.id,
             name: profile.name,
             phone_number: profile.phone_number,
             totalGuesses: userPredictions.length,
             totalWins,
-            totalWinnings
+            totalWinnings,
+            netWinnings,
           };
         });
 
-        // 4. Urutkan berdasarkan total kemenangan (wins) lalu total pendapatan (winnings)
+        // 4. Urutkan berdasarkan total kemenangan bersih (netWinnings) lalu total kemenangan tepat (totalWins)
         const sortedLeaderboard = leaderboardData.sort((a, b) => {
+          if (b.netWinnings !== a.netWinnings) {
+            return b.netWinnings - a.netWinnings;
+          }
           if (b.totalWins !== a.totalWins) {
             return b.totalWins - a.totalWins;
-          }
-          if (b.totalWinnings !== a.totalWinnings) {
-            return b.totalWinnings - a.totalWinnings;
           }
           return b.totalGuesses - a.totalGuesses;
         });
@@ -201,8 +205,9 @@ export default function LeaderboardPage() {
                   <th className="px-4 py-3 text-center w-16">Peringkat</th>
                   <th className="px-4 py-3">Nama Warga</th>
                   <th className="px-4 py-3 text-center">Total Tebakan</th>
-                  <th className="px-4 py-3 text-center">Tebakan Tepat (Wins)</th>
-                  <th className="px-4 py-3 text-right">Total Kemenangan</th>
+                  <th className="px-4 py-3 text-center font-bold text-primary">Rasio Menang</th>
+                  <th className="px-4 py-3 text-right">Kotor (Gross)</th>
+                  <th className="px-4 py-3 text-right font-black text-foreground">Kemenangan Bersih</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
@@ -213,6 +218,10 @@ export default function LeaderboardPage() {
                     "text-slate-300 bg-slate-500/10 border-slate-500/20", // Perak
                     "text-amber-700 bg-amber-800/10 border-amber-800/20"  // Perunggu
                   ];
+
+                  const winRatio = entry.totalGuesses > 0
+                    ? Math.round((entry.totalWins / entry.totalGuesses) * 100)
+                    : 0;
 
                   return (
                     <tr key={entry.profileId} className="hover:bg-muted/20 transition-colors">
@@ -237,13 +246,22 @@ export default function LeaderboardPage() {
                         {entry.totalGuesses} tebakan
                       </td>
                       <td className="px-4 py-3.5 text-center">
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500/10 text-green-500 border border-green-500/20">
-                          <CheckCircle className="h-3 w-3 mr-0.5" />
-                          {entry.totalWins} Kali
+                        <span className="inline-flex flex-col items-center">
+                          <span className="font-bold text-foreground">{entry.totalWins} / {entry.totalGuesses}</span>
+                          <span className="text-[10px] text-muted-foreground">({winRatio}%)</span>
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 text-right font-black text-primary text-sm">
+                      <td className="px-4 py-3.5 text-right font-bold text-muted-foreground text-xs">
                         Rp {entry.totalWinnings.toLocaleString("id-ID")}
+                      </td>
+                      <td className={`px-4 py-3.5 text-right font-black text-sm ${
+                        entry.netWinnings > 0
+                          ? "text-green-500"
+                          : entry.netWinnings < 0
+                          ? "text-rose-500"
+                          : "text-muted-foreground"
+                      }`}>
+                        {entry.netWinnings > 0 ? "+" : ""}Rp {entry.netWinnings.toLocaleString("id-ID")}
                       </td>
                     </tr>
                   );
