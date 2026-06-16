@@ -152,8 +152,6 @@ export default function MyPredictionsPage() {
   const [cart, setCart] = useState<{ [matchId: string]: { score_a: number; score_b: number }[] }>({});
   const [paymentMethod, setPaymentMethod] = useState<"qris" | "cash">("qris");
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [currentTxId, setCurrentTxId] = useState<string | null>(null);
 
   // Search Match State
   const [matchQuery, setMatchQuery] = useState("");
@@ -458,7 +456,7 @@ export default function MyPredictionsPage() {
           amount: totalCartPrice,
           payment_status: "pending",
           payment_method: paymentMethod,
-          transaction_reference: paymentMethod === "qris" ? `QRIS-SIM-${Date.now()}` : `CASH-PENDING-${Date.now()}`
+          transaction_reference: paymentMethod === "qris" ? `QRIS-PENDING-${Date.now()}` : `CASH-PENDING-${Date.now()}`
         })
         .select()
         .single();
@@ -491,8 +489,47 @@ export default function MyPredictionsPage() {
       if (paymentMethod === "cash") {
         alert("Tebakan Anda berhasil diajukan! Status transaksi saat ini PENDING. Silakan lakukan pembayaran tunai ke meja panitia RT 12 sebesar Rp " + totalCartPrice.toLocaleString("id-ID") + ".");
       } else {
-        setCurrentTxId(newTx.id);
-        setShowInvoiceModal(true);
+        await payWithMidtrans(newTx.id);
+      }
+    } catch (err: any) {
+      alert("Gagal memproses transaksi: " + err.message);
+      setCheckoutSubmitting(false);
+    }
+  };
+
+  const payWithMidtrans = async (txId: string) => {
+    try {
+      setCheckoutSubmitting(true);
+      const payRes = await fetch("/api/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transactionId: txId }),
+      });
+      const paymentData = await payRes.json();
+      if (paymentData.error) throw new Error(paymentData.error);
+
+      if ((window as any).snap) {
+        (window as any).snap.pay(paymentData.token, {
+          onSuccess: async function () {
+            alert("Pembayaran sukses! Tebakan Anda kini terdaftar.");
+            if (profile) await loadDashboardData(profile.id);
+          },
+          onPending: async function () {
+            alert("Pembayaran pending. Silakan selesaikan pembayaran Anda.");
+            if (profile) await loadDashboardData(profile.id);
+          },
+          onError: function () {
+            alert("Pembayaran gagal! Silakan coba lagi.");
+          },
+          onClose: async function () {
+            alert("Anda menutup halaman pembayaran sebelum menyelesaikan transaksi.");
+            if (profile) await loadDashboardData(profile.id);
+          }
+        });
+      } else {
+        alert("Gagal memuat sistem pembayaran Midtrans. Silakan coba beberapa saat lagi atau hubungi panitia.");
       }
     } catch (err: any) {
       alert("Gagal memproses transaksi: " + err.message);
@@ -501,50 +538,16 @@ export default function MyPredictionsPage() {
     }
   };
 
-  // Simulating pending payment on DB transactions
-  const handlePayPendingTx = (txId: string) => {
+  // Pay pending transactions in DB
+  const handlePayPendingTx = async (txId: string) => {
     const tx = unpaidTransactions.find(t => t.id === txId);
     if (tx) {
       if (tx.payment_method === "cash") {
         alert("Pembayaran tunai harus diselesaikan di meja panitia RT 12 secara langsung.");
       } else {
-        setCurrentTxId(txId);
-        setShowInvoiceModal(true);
+        await payWithMidtrans(txId);
       }
     }
-  };
-
-  const handleSimulatePaymentSuccess = async () => {
-    if (!currentTxId || !profile) return;
-    setCheckoutSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from("transactions")
-        .update({ payment_status: "paid" })
-        .eq("id", currentTxId);
-
-      if (error) throw error;
-      alert("Simulasi pembayaran QRIS berhasil!");
-      setShowInvoiceModal(false);
-      setCurrentTxId(null);
-      await loadDashboardData(profile.id);
-    } catch (err: any) {
-      alert("Gagal memproses simulasi: " + err.message);
-    } finally {
-      setCheckoutSubmitting(false);
-    }
-  };
-
-  const handleCancelPayment = async () => {
-    if (currentTxId && profile) {
-      await supabase
-        .from("transactions")
-        .update({ payment_status: "failed" })
-        .eq("id", currentTxId);
-      await loadDashboardData(profile.id);
-    }
-    setShowInvoiceModal(false);
-    setCurrentTxId(null);
   };
 
   // --- WITHDRAWAL SUBMIT ---
@@ -1291,41 +1294,6 @@ export default function MyPredictionsPage() {
 
         </div>
       </div>
-
-      {/* MODAL: QRIS SIMULATION */}
-      {showInvoiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-2xl p-6 space-y-6 shadow-2xl relative">
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold text-foreground">Simulasi Pembayaran QRIS</h3>
-              <p className="text-xs text-muted-foreground">Silakan scan kode QR simulasi berikut untuk menyelesaikan tebakan.</p>
-            </div>
-
-            <div className="space-y-4 text-center">
-              <div className="mx-auto w-44 h-44 bg-white p-2.5 rounded-xl flex items-center justify-center border border-border">
-                <div className="text-center space-y-2 text-black">
-                  <div className="font-extrabold text-sm uppercase">QRIS PASAR</div>
-                  <div className="mx-auto w-28 h-28 bg-slate-300 rounded-lg flex items-center justify-center font-bold text-[10px]">
-                    [SIMULASI QR CODE]
-                  </div>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground bg-muted p-3 rounded-xl border border-border/40">
-                Tindakan ini menyimulasikan notifikasi sukses pembayaran instant (webhook) dari penyedia gerbang pembayaran.
-              </div>
-            </div>
-
-            <div className="flex space-x-2 pt-2 border-t border-border/30">
-              <Button variant="outline" className="flex-1 text-xs" onClick={handleCancelPayment} disabled={checkoutSubmitting}>
-                Batal
-              </Button>
-              <Button className="flex-1 text-xs font-bold" onClick={handleSimulatePaymentSuccess} disabled={checkoutSubmitting}>
-                {checkoutSubmitting ? "Memproses..." : "Simulasi Sukses"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL: PREVIEW TRANSFER RECEIPT */}
       {previewReceiptUrl && (

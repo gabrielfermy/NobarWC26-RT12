@@ -138,7 +138,6 @@ export default function Home() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [predictionsCart, setPredictionsCart] = useState<{ [matchId: string]: { score_a: number; score_b: number }[] }>({});
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"qris" | "cash">("qris");
   const [activeTab, setActiveTab] = useState<"laga" | "nobar">("laga");
   
@@ -147,7 +146,6 @@ export default function Home() {
   const [profile, setProfile] = useState<any>(null);
   const [publicPredictions, setPublicPredictions] = useState<PublicPrediction[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [currentTxId, setCurrentTxId] = useState<string | null>(null);
 
   // Community Wall state
   const [comments, setComments] = useState<{ id: string; name: string; message: string; created_at: string }[]>([]);
@@ -442,7 +440,7 @@ export default function Home() {
           amount: totalPrice,
           payment_status: "pending",
           payment_method: paymentMethod,
-          transaction_reference: paymentMethod === "qris" ? `QRIS-SIM-${Date.now()}` : `CASH-PENDING-${Date.now()}`
+          transaction_reference: paymentMethod === "qris" ? `QRIS-PENDING-${Date.now()}` : `CASH-PENDING-${Date.now()}`
         })
         .select()
         .single();
@@ -469,54 +467,48 @@ export default function Home() {
 
       if (predErr) throw predErr;
 
-      setCurrentTxId(newTx.id);
-
       if (paymentMethod === "cash") {
         alert("Tebakan Anda berhasil diajukan! Status transaksi Anda saat ini PENDING. Silakan temui petugas RT 12 di meja registrasi nobar untuk melakukan pembayaran tunai sebesar Rp " + totalPrice.toLocaleString("id-ID") + " agar diaktifkan oleh admin.");
         setPredictionsCart({});
-        setCurrentTxId(null);
       } else {
-        // QRIS, buka modal invoice untuk simulasi bayar
-        setShowInvoiceModal(true);
+        // Panggil API Payment Route kita untuk mendapatkan Midtrans Snap Token
+        const payRes = await fetch("/api/payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ transactionId: newTx.id }),
+        });
+        const paymentData = await payRes.json();
+        if (paymentData.error) throw new Error(paymentData.error);
+
+        // Buka Midtrans Snap Popup
+        if ((window as any).snap) {
+          (window as any).snap.pay(paymentData.token, {
+            onSuccess: function () {
+              alert("Pembayaran sukses! Tebakan Anda kini terdaftar.");
+              setPredictionsCart({});
+            },
+            onPending: function () {
+              alert("Pembayaran pending. Silakan selesaikan pembayaran Anda.");
+              setPredictionsCart({});
+            },
+            onError: function () {
+              alert("Pembayaran gagal! Silakan coba lagi.");
+            },
+            onClose: function () {
+              alert("Anda menutup halaman pembayaran sebelum menyelesaikan transaksi.");
+            }
+          });
+        } else {
+          alert("Gagal memuat sistem pembayaran Midtrans. Silakan coba beberapa saat lagi atau hubungi panitia.");
+        }
       }
     } catch (err: any) {
       alert("Gagal memproses transaksi: " + err.message);
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleSimulatePaymentSuccess = async () => {
-    if (!currentTxId) return;
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from("transactions")
-        .update({ payment_status: "paid" })
-        .eq("id", currentTxId);
-
-      if (error) throw error;
-      alert("Simulasi pembayaran sukses! Status transaksi Anda menjadi PAID dan tebakan Anda kini aktif.");
-      setPredictionsCart({});
-      setShowInvoiceModal(false);
-      setCurrentTxId(null);
-    } catch (err: any) {
-      alert("Gagal memproses pembayaran simulasi: " + err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancelPayment = async () => {
-    if (currentTxId) {
-      // Set status transaksi ke failed agar tidak menggantung sebagai pending terus
-      await supabase
-        .from("transactions")
-        .update({ payment_status: "failed" })
-        .eq("id", currentTxId);
-      setCurrentTxId(null);
-    }
-    setShowInvoiceModal(false);
   };
   const totalPredictionsCount = Object.values(predictionsCart).reduce((sum, list) => sum + list.length, 0);
   const totalPrice = totalPredictionsCount * 10000;
@@ -954,59 +946,6 @@ export default function Home() {
 
       </div>
 
-      {/* Modal / Dialog Invoice Simulasi */}
-      {showInvoiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-xl p-6 space-y-6 shadow-2xl relative">
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold text-foreground">
-                {paymentMethod === "qris" ? "Pembayaran QRIS" : "Bayar Tunai ke Admin"}
-              </h3>
-              <p className="text-xs text-muted-foreground">Selesaikan pembayaran Anda untuk memproses tebakan.</p>
-            </div>
-
-            {paymentMethod === "qris" ? (
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-48 h-48 bg-white p-2 rounded-lg flex items-center justify-center border border-border">
-                  <div className="text-center space-y-2 text-black">
-                    <div className="font-bold text-lg">QRIS OUTLET</div>
-                    <div className="mx-auto w-32 h-32 bg-slate-300 rounded flex items-center justify-center font-bold text-xs">
-                      [SIMULASI QR CODE]
-                    </div>
-                  </div>
-                </div>
-                <div className="text-sm font-semibold text-primary">Total: Rp {totalPrice.toLocaleString("id-ID")}</div>
-                <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                  Di lingkungan production, kami memanggil API Xendit untuk memunculkan QRIS Dinamis dan melacak status bayar secara real-time.
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <UserCheck className="h-8 w-8" />
-                </div>
-                <div className="text-sm">
-                  Silakan serahkan uang tunai sebesar <strong>Rp {totalPrice.toLocaleString("id-ID")}</strong> kepada petugas Admin di meja registrasi nobar.
-                </div>
-                <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                  Admin akan memasukkan tebakan Anda di dashboard admin, dan Anda akan menerima struk fisik tercetak.
-                </div>
-              </div>
-            )}
-
-            <div className="flex space-x-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={handleCancelPayment} disabled={submitting}>
-                Batal
-              </Button>
-              {paymentMethod === "qris" && (
-                <Button className="flex-1" onClick={handleSimulatePaymentSuccess} disabled={submitting}>
-                  {submitting ? "Memproses..." : "Simulasi Sukses"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -25,6 +25,8 @@ export const metadata: Metadata = {
 };
 
 import { Navbar } from "@/components/Navbar";
+import Link from "next/link";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -41,10 +43,23 @@ export default function RootLayout({
           <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             {children}
           </main>
-          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground space-y-3">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 font-medium">
+              <Link href="/terms" className="hover:text-primary transition-colors">Syarat & Ketentuan</Link>
+              <Link href="/privacy" className="hover:text-primary transition-colors">Kebijakan Privasi</Link>
+              <Link href="/refund" className="hover:text-primary transition-colors">Kebijakan Refund</Link>
+              <Link href="/contact" className="hover:text-primary transition-colors">Hubungi Kami</Link>
+            </div>
             <p>© 2026 World Cup Nobar Kelurahan. Semua tebakan skor bersifat transparan.</p>
           </footer>
         </div>
+        <Script
+          src={process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+            ? "https://app.midtrans.com/snap/snap.js"
+            : "https://app.sandbox.midtrans.com/snap/snap.js"}
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );
