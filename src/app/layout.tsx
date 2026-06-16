@@ -51,6 +51,7 @@ export default function RootLayout({
               <Link href="/contact" className="hover:text-primary transition-colors">Hubungi Kami</Link>
             </div>
             <p>© 2026 World Cup Nobar Kelurahan. Semua tebakan skor bersifat transparan.</p>
+            <p className="text-[10px] text-muted-foreground/60 tracking-wider font-semibold uppercase">Designed and Developed by Ashvin Labs Id</p>
           </footer>
         </div>
         <Script
