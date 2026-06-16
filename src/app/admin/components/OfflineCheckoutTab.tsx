@@ -338,32 +338,68 @@ export default function OfflineCheckoutTab({
         ) : (
           <div className="space-y-4">
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {offlinePredictions.map((pred, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center bg-background/50 p-2.5 rounded-lg border border-border/30 text-xs"
-                >
-                  <div>
-                    <div className="font-bold text-foreground">
-                      {pred.team_a} vs {pred.team_b}
+              {offlinePredictions.map((pred, idx) => {
+                const flagA = getFlagUrl ? getFlagUrl(pred.team_a) : null;
+                const flagB = getFlagUrl ? getFlagUrl(pred.team_b) : null;
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col bg-background/50 p-2.5 rounded-lg border border-border/30 text-xs gap-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      {/* Team A & Flag */}
+                      <div className="flex items-center space-x-1.5 w-[38%] justify-end text-right">
+                        <span className="font-bold truncate text-[10px] sm:text-xs text-foreground">
+                          {pred.team_a}
+                        </span>
+                        {flagA ? (
+                          <img src={flagA} alt="" className="w-5 h-3.5 object-cover rounded shadow-xs border border-border/10 shrink-0" />
+                        ) : (
+                          <div className="w-5 h-3.5 bg-muted rounded border border-border shrink-0" />
+                        )}
+                      </div>
+
+                      {/* Scores & VS */}
+                      <div className="flex items-center space-x-1 justify-center shrink-0">
+                        <span className="font-mono font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded text-xs">
+                          {pred.score_a}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground font-semibold">vs</span>
+                        <span className="font-mono font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded text-xs">
+                          {pred.score_b}
+                        </span>
+                      </div>
+
+                      {/* Team B & Flag */}
+                      <div className="flex items-center space-x-1.5 w-[38%] justify-start text-left">
+                        {flagB ? (
+                          <img src={flagB} alt="" className="w-5 h-3.5 object-cover rounded shadow-xs border border-border/10 shrink-0" />
+                        ) : (
+                          <div className="w-5 h-3.5 bg-muted rounded border border-border shrink-0" />
+                        )}
+                        <span className="font-bold truncate text-[10px] sm:text-xs text-foreground">
+                          {pred.team_b}
+                        </span>
+                      </div>
+
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeOfflinePrediction(idx)}
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10 shrink-0 ml-1"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
-                    <div className="text-muted-foreground text-[10px]">{pred.stage}</div>
+
+                    <div className="text-muted-foreground text-[8px] font-semibold text-center uppercase tracking-wide border-t border-border/20 pt-1">
+                      {pred.stage}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded text-sm">
-                      {pred.score_a} - {pred.score_b}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeOfflinePrediction(idx)}
-                      className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-border pt-4 space-y-2">
