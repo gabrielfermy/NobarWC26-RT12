@@ -1180,11 +1180,20 @@ export default function AdminPage() {
                         <option value="">-- Pilih Pertandingan --</option>
                         {matches
                           .filter(m => m.status === "scheduled")
-                          .map(m => (
-                            <option key={m.id} value={m.id}>
-                              [{m.stage}] {m.team_a} vs {m.team_b}
-                            </option>
-                          ))}
+                          .map(m => {
+                            const formattedDate = new Date(m.match_time).toLocaleString("id-ID", {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).replace(/\./g, ':');
+                            return (
+                              <option key={m.id} value={m.id}>
+                                [{m.stage}] {m.team_a} vs {m.team_b} ({formattedDate} WIB)
+                              </option>
+                            );
+                          })}
                       </select>
                     </div>
 
@@ -1482,11 +1491,20 @@ export default function AdminPage() {
                       <option value="">-- Pilih Pertandingan --</option>
                       {matches
                         .filter(m => !m.stage.includes("Fase Grup"))
-                        .map(m => (
-                          <option key={m.id} value={m.id}>
-                            [{m.stage}] {m.team_a} vs {m.team_b}
-                          </option>
-                        ))}
+                        .map(m => {
+                          const formattedDate = new Date(m.match_time).toLocaleString("id-ID", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }).replace(/\./g, ':');
+                          return (
+                            <option key={m.id} value={m.id}>
+                              [{m.stage}] {m.team_a} vs {m.team_b} ({formattedDate} WIB)
+                            </option>
+                          );
+                        })}
                     </select>
                   </div>
 
