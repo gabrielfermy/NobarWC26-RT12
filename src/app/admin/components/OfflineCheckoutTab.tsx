@@ -59,6 +59,23 @@ export default function OfflineCheckoutTab({
     const match = matches.find((m) => m.id === selectedMatchId);
     if (!match) return;
 
+    const parsedScoreA = Math.max(0, Math.min(10, parseInt(predScoreA) || 0));
+    const parsedScoreB = Math.max(0, Math.min(10, parseInt(predScoreB) || 0));
+
+    // Cek duplikasi skor di dalam keranjang saat ini
+    const isDuplicateBasket = offlinePredictions.some(
+      (p) =>
+        p.matchId === selectedMatchId &&
+        p.score_a === parsedScoreA &&
+        p.score_b === parsedScoreB
+    );
+    if (isDuplicateBasket) {
+      alert(
+        `Gagal: Tebakan skor ${parsedScoreA} - ${parsedScoreB} untuk laga ini sudah ada di dalam keranjang.`
+      );
+      return;
+    }
+
     // Hitung berapa tebakan untuk laga ini di basket saat ini
     const countForMatch = offlinePredictions.filter((p) => p.matchId === selectedMatchId).length;
     if (countForMatch >= 5) {
@@ -73,8 +90,8 @@ export default function OfflineCheckoutTab({
         team_a: match.team_a,
         team_b: match.team_b,
         stage: match.stage,
-        score_a: parseInt(predScoreA) || 0,
-        score_b: parseInt(predScoreB) || 0,
+        score_a: parsedScoreA,
+        score_b: parsedScoreB,
       },
     ]);
   };
@@ -118,6 +135,38 @@ export default function OfflineCheckoutTab({
           .single();
         if (profileErr) throw profileErr;
         userId = newProfile.id;
+      }
+
+      // 1.5 Cek duplikasi tebakan dengan database untuk warga ini
+      for (const p of offlinePredictions) {
+        const { data: existingPreds, error: checkErr } = await supabase
+          .from("predictions")
+          .select(`
+            id,
+            predicted_score_a,
+            predicted_score_b,
+            transactions (
+              payment_status
+            )
+          `)
+          .eq("user_id", userId)
+          .eq("match_id", p.matchId);
+
+        if (!checkErr && existingPreds) {
+          const isDuplicateDb = existingPreds.some(
+            (dbPred: any) =>
+              dbPred.predicted_score_a === p.score_a &&
+              dbPred.predicted_score_b === p.score_b &&
+              dbPred.transactions?.payment_status !== "failed"
+          );
+          if (isDuplicateDb) {
+            alert(
+              `Gagal: Warga "${fullName}" sudah pernah mendaftarkan tebakan skor ${p.score_a} - ${p.score_b} untuk laga ${p.team_a} vs ${p.team_b} sebelumnya.`
+            );
+            setLoading(false);
+            return;
+          }
+        }
       }
 
       // 2. Buat Transaksi
