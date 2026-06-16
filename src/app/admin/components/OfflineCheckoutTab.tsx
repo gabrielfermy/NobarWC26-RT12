@@ -50,6 +50,13 @@ export default function OfflineCheckoutTab({
     }
   }, [waNumber, users]);
 
+  // Reset score inputs when selected match changes
+  useEffect(() => {
+    setPredScoreA("0");
+    setPredScoreB("0");
+  }, [selectedMatchId]);
+
+
   // Handle Offline Prediction Basket
   const addOfflinePrediction = () => {
     if (!selectedMatchId) {
