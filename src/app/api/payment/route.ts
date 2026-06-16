@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const name = profile?.name || "Warga RT 12";
     const phone = profile?.phone_number || "081234567890";
 
-    const midtransServerKey = process.env.MIDTRANS_SERVER_KEY || "";
+    const midtransServerKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
     const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
 
     if (!midtransServerKey) {
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         "Authorization": authHeader,
       },
       body: JSON.stringify(payload),
+      cache: "no-store", // Mencegah caching Next.js agar env var ter-update dibaca langsung
     });
 
     const result = await response.json();
