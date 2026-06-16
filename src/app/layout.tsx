@@ -17,6 +17,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Nobar PilDun 2026 RT 12 Pelem Kidul",
   description: "Aplikasi Tebak Skor Piala Dunia 2026 tingkat kelurahan / RT 12 Pelem Kidul.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 import { Navbar } from "@/components/Navbar";
