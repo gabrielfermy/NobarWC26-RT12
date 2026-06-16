@@ -621,7 +621,7 @@ export default function Home() {
                       return (
                         <div key={match.id} className="w-full bg-card border border-border rounded-xl p-4 space-y-3 shadow-sm flex flex-col justify-between">
                           <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
-                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">{match.stage.split(" ")[0]}</span>
+                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">{match.stage}</span>
                             <span>{formattedDate}</span>
                           </div>
 
