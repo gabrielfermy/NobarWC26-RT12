@@ -182,7 +182,26 @@ export async function POST(request: NextRequest) {
 
       const isCompleted = competition.status?.type?.completed === true;
       const isLive = competition.status?.type?.state === 'in';
-      const statusMapped = isCompleted ? 'completed' : (isLive ? 'ongoing' : 'scheduled');
+      const espnStatus = competition.status?.type?.name || '';
+      
+      let statusMapped = 'scheduled';
+      if (isCompleted) {
+        statusMapped = 'completed';
+      } else if (isLive) {
+        if (espnStatus === 'STATUS_FIRST_HALF') {
+          statusMapped = 'first_half';
+        } else if (espnStatus === 'STATUS_HALFTIME') {
+          statusMapped = 'half_time';
+        } else if (espnStatus === 'STATUS_SECOND_HALF') {
+          statusMapped = 'second_half';
+        } else if (espnStatus === 'STATUS_OVERTIME') {
+          statusMapped = 'overtime';
+        } else if (espnStatus === 'STATUS_SHOOTOUT') {
+          statusMapped = 'penalties';
+        } else {
+          statusMapped = 'first_half'; // fallback/default live state
+        }
+      }
 
       const scoreA = (isCompleted || isLive) && homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
       const scoreB = (isCompleted || isLive) && awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
