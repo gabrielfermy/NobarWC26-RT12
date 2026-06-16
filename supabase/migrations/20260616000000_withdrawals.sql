@@ -30,8 +30,11 @@ VALUES ('withdrawals', 'withdrawals', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Kebijakan RLS untuk bucket withdrawals
+DROP POLICY IF EXISTS "Bukti transfer dapat dilihat publik" ON storage.objects;
 CREATE POLICY "Bukti transfer dapat dilihat publik" ON storage.objects FOR SELECT TO public
     USING (bucket_id = 'withdrawals');
 
+DROP POLICY IF EXISTS "Admin dapat mengelola bukti transfer" ON storage.objects;
 CREATE POLICY "Admin dapat mengelola bukti transfer" ON storage.objects FOR ALL TO authenticated
     USING (bucket_id = 'withdrawals' AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+

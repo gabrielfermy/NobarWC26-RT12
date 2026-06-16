@@ -168,15 +168,25 @@ export default function ManageMatchesTab({
                     <div className="flex items-center space-x-1">
                       <input
                         type="number"
+                        min="0"
+                        max="10"
                         value={editScoreA}
-                        onChange={(e) => setEditScoreA(e.target.value)}
+                        onChange={(e) => {
+                          const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                          setEditScoreA(val.toString());
+                        }}
                         className="w-10 text-center py-1 border border-input rounded bg-background font-bold text-sm text-foreground"
                       />
                       <span className="text-muted-foreground">-</span>
                       <input
                         type="number"
+                        min="0"
+                        max="10"
                         value={editScoreB}
-                        onChange={(e) => setEditScoreB(e.target.value)}
+                        onChange={(e) => {
+                          const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                          setEditScoreB(val.toString());
+                        }}
                         className="w-10 text-center py-1 border border-input rounded bg-background font-bold text-sm text-foreground"
                       />
                     </div>

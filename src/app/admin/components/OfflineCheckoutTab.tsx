@@ -286,15 +286,25 @@ export default function OfflineCheckoutTab({
                 <div className="flex items-center space-x-2 shrink-0">
                   <input
                     type="number"
+                    min="0"
+                    max="10"
                     value={predScoreA}
-                    onChange={(e) => setPredScoreA(e.target.value)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                      setPredScoreA(val.toString());
+                    }}
                     className="w-12 h-9 text-center bg-background border border-input rounded-lg text-sm font-black text-foreground focus:ring-2 focus:ring-primary"
                   />
                   <span className="text-muted-foreground font-black">-</span>
                   <input
                     type="number"
+                    min="0"
+                    max="10"
                     value={predScoreB}
-                    onChange={(e) => setPredScoreB(e.target.value)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                      setPredScoreB(val.toString());
+                    }}
                     className="w-12 h-9 text-center bg-background border border-input rounded-lg text-sm font-black text-foreground focus:ring-2 focus:ring-primary"
                   />
                 </div>

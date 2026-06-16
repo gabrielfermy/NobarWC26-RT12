@@ -268,20 +268,26 @@ export default function NewPredictionsTab({
                               <div className="flex items-center space-x-1 justify-end flex-1">
                                 <input
                                   type="number"
+                                  min={0}
+                                  max={10}
                                   value={pred.score_a}
-                                  onChange={(e) =>
-                                    updateCartScore(matchId, idx, "a", parseInt(e.target.value) || 0)
-                                  }
-                                  className="w-8 h-6 text-center rounded border border-input bg-background font-bold text-[10px] text-foreground"
+                                  onChange={(e) => {
+                                    const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                                    updateCartScore(matchId, idx, "a", val);
+                                  }}
+                                  className="w-8 h-6 text-center rounded border border-input bg-background font-bold text-xs text-foreground"
                                 />
                                 <span className="text-muted-foreground font-bold text-[9px]">-</span>
                                 <input
                                   type="number"
+                                  min={0}
+                                  max={10}
                                   value={pred.score_b}
-                                  onChange={(e) =>
-                                    updateCartScore(matchId, idx, "b", parseInt(e.target.value) || 0)
-                                  }
-                                  className="w-8 h-6 text-center rounded border border-input bg-background font-bold text-[10px] text-foreground"
+                                  onChange={(e) => {
+                                    const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                                    updateCartScore(matchId, idx, "b", val);
+                                  }}
+                                  className="w-8 h-6 text-center rounded border border-input bg-background font-bold text-xs text-foreground"
                                 />
                                 <Button
                                   variant="ghost"

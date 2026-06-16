@@ -107,15 +107,25 @@ export default function CartTab({
                             <div className="flex items-center space-x-1">
                               <input
                                 type="number"
+                                min={0}
+                                max={10}
                                 value={pred.score_a}
-                                onChange={(e) => updateCartScore(matchId, idx, "a", parseInt(e.target.value) || 0)}
+                                onChange={(e) => {
+                                  const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                                  updateCartScore(matchId, idx, "a", val);
+                                }}
                                 className="w-10 h-7 text-center rounded border border-input bg-background font-bold text-xs text-foreground"
                               />
                               <span className="text-muted-foreground font-bold text-[10px]">-</span>
                               <input
                                 type="number"
+                                min={0}
+                                max={10}
                                 value={pred.score_b}
-                                onChange={(e) => updateCartScore(matchId, idx, "b", parseInt(e.target.value) || 0)}
+                                onChange={(e) => {
+                                  const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                                  updateCartScore(matchId, idx, "b", val);
+                                }}
                                 className="w-10 h-7 text-center rounded border border-input bg-background font-bold text-xs text-foreground"
                               />
                             </div>
