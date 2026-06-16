@@ -75,8 +75,12 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       console.error("Midtrans API Error:", result);
+      const maskedKey = midtransServerKey 
+        ? `${midtransServerKey.substring(0, Math.min(6, midtransServerKey.length))}...${midtransServerKey.substring(Math.max(0, midtransServerKey.length - 4))}` 
+        : "undefined/empty";
+      const debugInfo = `[URL: ${midtransUrl}, IS_PROD: ${isProduction}, Key: ${maskedKey} (len: ${midtransServerKey.length})]`;
       const detailError = result.error_messages ? result.error_messages.join(", ") : JSON.stringify(result);
-      return NextResponse.json({ error: `Failed to create payment session from Midtrans: ${detailError}` }, { status: 500 });
+      return NextResponse.json({ error: `Failed to create payment session: ${detailError} ${debugInfo}` }, { status: 500 });
     }
 
     // 4. Update transaksi dengan reference token Midtrans jika diinginkan
