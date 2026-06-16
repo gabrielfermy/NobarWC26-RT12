@@ -162,26 +162,45 @@ export function UpcomingMatches({
                 </div>
 
                 <div className="space-y-2.5 mt-auto pt-2 border-t border-border/20">
-                  {matchPreds.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[9px] font-bold text-muted-foreground block text-center">Tebakan Warga</span>
-                      <div className="space-y-1 max-h-[100px] overflow-y-auto pr-0.5">
-                        {matchPreds.map((pred) => (
-                          <div key={pred.id} className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-background/50 border border-border/20">
-                            <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/10 text-foreground w-6 text-center shrink-0">
-                              {pred.predicted_score_a}
-                            </span>
-                            <span className="text-[10px] font-bold text-foreground truncate text-center flex-1 px-1">
-                              {pred.profiles?.name || "Warga"}
-                            </span>
-                            <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/10 text-foreground w-6 text-center shrink-0">
-                              {pred.predicted_score_b}
-                            </span>
-                          </div>
-                        ))}
+                  {(() => {
+                    const groups: Record<string, { scoreA: number; scoreB: number; count: number }> = {};
+                    matchPreds.forEach((p) => {
+                      const key = `${p.predicted_score_a}-${p.predicted_score_b}`;
+                      if (!groups[key]) {
+                        groups[key] = {
+                          scoreA: p.predicted_score_a,
+                          scoreB: p.predicted_score_b,
+                          count: 0,
+                        };
+                      }
+                      groups[key].count += 1;
+                    });
+                    const summary = Object.values(groups).sort((a, b) => b.count - a.count);
+
+                    if (summary.length === 0) return null;
+
+                    return (
+                      <div className="space-y-1.5">
+                        <span className="text-[9px] font-bold text-muted-foreground block text-center">Tebakan Terpopuler</span>
+                        <div className="space-y-1 max-h-[100px] overflow-y-auto pr-0.5">
+                          {summary.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-background/50 border border-border/20">
+                              <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/10 text-foreground w-6 text-center shrink-0">
+                                {item.scoreA}
+                              </span>
+                              <span className="text-[10px] font-bold text-foreground text-center flex-1 px-1 flex items-center justify-center space-x-1">
+                                <span>👤</span>
+                                <span>{item.count}</span>
+                              </span>
+                              <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/10 text-foreground w-6 text-center shrink-0">
+                                {item.scoreB}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {!isBettingClosed && (!profile || profile.role !== "admin") && (
                     <Button
