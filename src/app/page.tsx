@@ -44,7 +44,7 @@ const countryCodes: Record<string, string> = {
   "Ekuador": "ec", "Ecuador": "ec",
   "Wales": "gb-wls",
   "Ukraina": "ua", "Ukraine": "ua",
-  "Turki": "tr", "Turkey": "tr",
+  "Turki": "tr", "Turkey": "tr", "Türkiye": "tr", "Turkiye": "tr",
   "Swedia": "se", "Sweden": "se",
   "Austria": "at",
   "Hongaria": "hu", "Hungary": "hu",
@@ -464,16 +464,24 @@ export default function Home() {
       {/* Tabs Menu */}
       <div className="flex space-x-1 bg-muted p-1 rounded-xl max-w-md mx-auto">
         <Button
-          variant={activeTab === "laga" ? "secondary" : "ghost"}
-          className="flex-1 text-xs py-2 rounded-lg font-bold flex items-center justify-center space-x-2"
+          variant={activeTab === "laga" ? "default" : "ghost"}
+          className={`flex-1 text-xs py-2 rounded-lg font-bold flex items-center justify-center space-x-2 transition-all ${
+            activeTab === "laga"
+              ? "bg-primary text-white shadow"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
           onClick={() => setActiveTab("laga")}
         >
           <Calendar className="h-4 w-4" />
           <span>Jadwal Laga</span>
         </Button>
         <Button
-          variant={activeTab === "nobar" ? "secondary" : "ghost"}
-          className="flex-1 text-xs py-2 rounded-lg font-bold flex items-center justify-center space-x-2"
+          variant={activeTab === "nobar" ? "default" : "ghost"}
+          className={`flex-1 text-xs py-2 rounded-lg font-bold flex items-center justify-center space-x-2 transition-all ${
+            activeTab === "nobar"
+              ? "bg-primary text-white shadow"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
           onClick={() => setActiveTab("nobar")}
         >
           <Tv className="h-4 w-4" />
