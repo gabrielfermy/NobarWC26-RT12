@@ -677,7 +677,8 @@ export default function AdminPage() {
   if (!isAdmin) return null;
 
   return (
-    <div className="space-y-8 py-6 print:hidden">
+    <>
+      <div className="space-y-8 py-6 print:hidden">
       
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -888,6 +889,8 @@ export default function AdminPage() {
         </div>
       )}
 
+      </div>
+
       {/* Embedded hidden printable receipt ticket */}
       {receiptData && (
         <ReceiptPrint 
@@ -895,7 +898,6 @@ export default function AdminPage() {
           predictions={receiptData.predictions} 
         />
       )}
-
-    </div>
+    </>
   );
 }
