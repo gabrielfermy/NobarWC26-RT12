@@ -90,6 +90,25 @@ const getFlagUrl = (teamName: string) => {
   return `https://flagcdn.com/w80/${code}.png`;
 };
 
+const getStadiumCountry = (stadiumName: string) => {
+  const nameLower = (stadiumName || "").toLowerCase();
+  if (nameLower.includes("estadio bbva") || 
+      nameLower.includes("estadio banorte") || 
+      nameLower.includes("estadio akron") || 
+      nameLower.includes("estadio azteca") || 
+      nameLower.includes("mexico") || 
+      nameLower.includes("meksiko")) {
+    return { name: "Meksiko", code: "mx" };
+  }
+  if (nameLower.includes("bmo field") || 
+      nameLower.includes("bc place") || 
+      nameLower.includes("canada") || 
+      nameLower.includes("kanada")) {
+    return { name: "Kanada", code: "ca" };
+  }
+  return { name: "Amerika Serikat", code: "us" };
+};
+
 interface Match {
   id: string;
   team_a: string;
@@ -498,6 +517,8 @@ export default function Home() {
                     {recentMatches.map((match) => {
                       const flagA = getFlagUrl(match.team_a);
                       const flagB = getFlagUrl(match.team_b);
+                      const stadiumCountry = getStadiumCountry(match.stadium);
+                      const stadiumFlag = getFlagUrl(stadiumCountry.name);
                       const formattedDate = new Date(match.match_time).toLocaleString("id-ID", {
                         weekday: "short",
                         day: "numeric",
@@ -557,9 +578,19 @@ export default function Home() {
                             </div>
                           </div>
 
-                          <div className="text-[10px] text-muted-foreground flex items-center border-t border-border/30 pt-2">
-                            <MapPin className="h-3 w-3 mr-1 text-accent shrink-0" />
-                            <span className="truncate">{match.stadium}</span>
+                          <div className="text-[10px] text-muted-foreground flex items-center justify-between border-t border-border/30 pt-2">
+                            <div className="flex items-center max-w-[80%]">
+                              <MapPin className="h-3 w-3 mr-1 text-accent shrink-0" />
+                              <span className="truncate mr-1.5">{match.stadium}</span>
+                              {stadiumCountry && (
+                                <span className="inline-flex items-center space-x-1 bg-muted px-1.5 py-0.5 rounded text-[8px] font-bold shrink-0">
+                                  {stadiumFlag && (
+                                    <img src={stadiumFlag} alt="" className="w-4 h-2.5 object-cover rounded-xs border border-border/20" />
+                                  )}
+                                  <span>{stadiumCountry.name}</span>
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -589,6 +620,8 @@ export default function Home() {
                     {upcomingMatches.map((match) => {
                       const flagA = getFlagUrl(match.team_a);
                       const flagB = getFlagUrl(match.team_b);
+                      const stadiumCountry = getStadiumCountry(match.stadium);
+                      const stadiumFlag = getFlagUrl(stadiumCountry.name);
 
                       // Aturan Penutupan Tebakan: Pertandingan sudah mulai (status bukan 'scheduled') atau waktu tanding terlewati
                       const isBettingClosed = match.status !== "scheduled" || new Date(match.match_time).getTime() < Date.now();
@@ -640,9 +673,19 @@ export default function Home() {
                           </div>
 
                           {/* Informasi Stadion */}
-                          <div className="text-[10px] text-muted-foreground flex items-center border-t border-border/30 pt-3">
-                            <MapPin className="h-3 w-3 mr-1 text-primary shrink-0" />
-                            <span className="truncate">{match.stadium}</span>
+                          <div className="text-[10px] text-muted-foreground flex items-center justify-between border-t border-border/30 pt-3">
+                            <div className="flex items-center max-w-[80%]">
+                              <MapPin className="h-3 w-3 mr-1 text-primary shrink-0" />
+                              <span className="truncate mr-1.5">{match.stadium}</span>
+                              {stadiumCountry && (
+                                <span className="inline-flex items-center space-x-1 bg-muted px-1.5 py-0.5 rounded text-[8px] font-bold shrink-0">
+                                  {stadiumFlag && (
+                                    <img src={stadiumFlag} alt="" className="w-4 h-2.5 object-cover rounded-xs border border-border/20" />
+                                  )}
+                                  <span>{stadiumCountry.name}</span>
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* Tombol Aksi Tebak Skor Arahkan ke Dashboard */}
