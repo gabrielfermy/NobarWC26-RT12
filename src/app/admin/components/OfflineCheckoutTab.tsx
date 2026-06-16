@@ -122,7 +122,8 @@ export default function OfflineCheckoutTab({
   const [predScoreA, setPredScoreA] = useState("0");
   const [predScoreB, setPredScoreB] = useState("0");
   const [offlinePredictions, setOfflinePredictions] = useState<any[]>([]);
-  const [matchFilterQuery, setMatchFilterQuery] = useState("");
+  const [matchSearchQuery, setMatchSearchQuery] = useState("");
+  const [isOpenMatchSelect, setIsOpenMatchSelect] = useState(false);
 
   const selectedMatch = matches.find((m) => m.id === selectedMatchId);
 
@@ -382,55 +383,161 @@ export default function OfflineCheckoutTab({
           <h4 className="font-bold text-sm">Pilih & Masukkan Skor Tebakan</h4>
           <div className="space-y-4">
             {/* Pilih Pertandingan */}
-            <div className="space-y-2">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <label className="text-[10px] font-semibold text-muted-foreground block">
-                  Pertandingan
-                </label>
-                <input
-                  type="text"
-                  placeholder="Cari negara (misal: Portugal, Irak)..."
-                  value={matchFilterQuery}
-                  onChange={(e) => setMatchFilterQuery(e.target.value)}
-                  className="block w-full sm:w-64 px-2.5 py-1 bg-background border border-input rounded text-[10px] placeholder-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
-                />
-              </div>
-              <select
-                value={selectedMatchId}
-                onChange={(e) => setSelectedMatchId(e.target.value)}
-                className="block w-full px-3 py-2 bg-background border border-input rounded-lg text-xs text-foreground focus:ring-2 focus:ring-primary"
+            <div className="space-y-2 relative">
+              <label className="text-[10px] font-semibold text-muted-foreground block">
+                Pertandingan
+              </label>
+
+              {/* Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsOpenMatchSelect(!isOpenMatchSelect)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-background border border-input rounded-lg text-xs text-foreground focus:ring-2 focus:ring-primary focus:outline-none text-left h-10 shadow-sm hover:bg-muted/10 transition-colors"
               >
-                <option value="">-- Pilih Pertandingan --</option>
-                {matches
-                  .filter((m) => m.status === "scheduled")
-                  .filter((m) => {
-                    const q = matchFilterQuery.toLowerCase().trim();
-                    return (
-                      !q ||
-                      m.team_a.toLowerCase().includes(q) ||
-                      m.team_b.toLowerCase().includes(q) ||
-                      m.stage.toLowerCase().includes(q)
-                    );
-                  })
-                  .map((m) => {
-                    const flagEmojiA = getFlagEmoji(m.team_a);
-                    const flagEmojiB = getFlagEmoji(m.team_b);
-                    const formattedDate = new Date(m.match_time)
-                      .toLocaleString("id-ID", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                      .replace(/\./g, ":");
-                    return (
-                      <option key={m.id} value={m.id}>
-                        [{m.stage}] {flagEmojiA} {m.team_a} vs {flagEmojiB} {m.team_b} ({formattedDate} WIB)
-                      </option>
-                    );
-                  })}
-              </select>
+                {selectedMatch ? (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-muted-foreground font-semibold mr-2 shrink-0 text-[10px]">
+                      [{selectedMatch.stage}]
+                    </span>
+                    <div className="flex items-center space-x-2 flex-1 justify-center">
+                      <div className="flex items-center space-x-1.5">
+                        {getFlagUrl && getFlagUrl(selectedMatch.team_a) && (
+                          <img
+                            src={getFlagUrl(selectedMatch.team_a)!}
+                            alt=""
+                            className="w-5 h-3 object-cover rounded border border-border/20"
+                          />
+                        )}
+                        <span className="font-bold">{selectedMatch.team_a}</span>
+                      </div>
+                      <span className="text-muted-foreground text-[10px]">vs</span>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-bold">{selectedMatch.team_b}</span>
+                        {getFlagUrl && getFlagUrl(selectedMatch.team_b) && (
+                          <img
+                            src={getFlagUrl(selectedMatch.team_b)!}
+                            alt=""
+                            className="w-5 h-3 object-cover rounded border border-border/20"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">-- Pilih Pertandingan --</span>
+                )}
+                <span className="ml-2 text-muted-foreground text-[8px]">▼</span>
+              </button>
+
+              {/* Floating Dropdown Overlay */}
+              {isOpenMatchSelect && (
+                <>
+                  {/* Backdrop click to close */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsOpenMatchSelect(false)}
+                  />
+
+                  <div className="absolute left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-20 flex flex-col max-h-64 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                    {/* Search inside dropdown */}
+                    <div className="p-2 border-b border-border bg-muted/40">
+                      <input
+                        type="text"
+                        placeholder="Ketik untuk mencari negara..."
+                        autoFocus
+                        value={matchSearchQuery}
+                        onChange={(e) => setMatchSearchQuery(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-background border border-input rounded text-xs placeholder-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                      />
+                    </div>
+
+                    {/* Scrollable list */}
+                    <div className="overflow-y-auto flex-1 py-1">
+                      {matches
+                        .filter((m) => m.status === "scheduled")
+                        .filter((m) => {
+                          const q = matchSearchQuery.toLowerCase().trim();
+                          return (
+                            !q ||
+                            m.team_a.toLowerCase().includes(q) ||
+                            m.team_b.toLowerCase().includes(q) ||
+                            m.stage.toLowerCase().includes(q)
+                          );
+                        }).length === 0 ? (
+                        <div className="text-center py-6 text-xs text-muted-foreground">
+                          Pertandingan tidak ditemukan.
+                        </div>
+                      ) : (
+                        matches
+                          .filter((m) => m.status === "scheduled")
+                          .filter((m) => {
+                            const q = matchSearchQuery.toLowerCase().trim();
+                            return (
+                              !q ||
+                              m.team_a.toLowerCase().includes(q) ||
+                              m.team_b.toLowerCase().includes(q) ||
+                              m.stage.toLowerCase().includes(q)
+                            );
+                          })
+                          .map((m) => {
+                            const flagA = getFlagUrl ? getFlagUrl(m.team_a) : null;
+                            const flagB = getFlagUrl ? getFlagUrl(m.team_b) : null;
+                            const formattedDate = new Date(m.match_time)
+                              .toLocaleString("id-ID", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                              .replace(/\./g, ":");
+
+                            return (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedMatchId(m.id);
+                                  setIsOpenMatchSelect(false);
+                                  setMatchSearchQuery("");
+                                }}
+                                className={`w-full text-left px-3 py-2 hover:bg-primary/10 flex items-center justify-between text-xs transition-colors border-b border-border/20 last:border-0 ${
+                                  selectedMatchId === m.id ? "bg-primary/5 font-bold" : ""
+                                }`}
+                              >
+                                <div className="flex flex-col space-y-1.5 flex-1">
+                                  <div className="flex justify-between items-center text-[9px] text-muted-foreground font-semibold">
+                                    <span className="uppercase">{m.stage}</span>
+                                    <span>{formattedDate} WIB</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    {flagA && (
+                                      <img
+                                        src={flagA}
+                                        alt=""
+                                        className="w-5 h-3 object-cover rounded border border-border/20 shrink-0"
+                                      />
+                                    )}
+                                    <span className="text-foreground">{m.team_a}</span>
+                                    <span className="text-muted-foreground text-[9px]">vs</span>
+                                    <span className="text-foreground">{m.team_b}</span>
+                                    {flagB && (
+                                      <img
+                                        src={flagB}
+                                        alt=""
+                                        className="w-5 h-3 object-cover rounded border border-border/20 shrink-0"
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Input Skor Visual dengan Bendera & Nama Tim */}
