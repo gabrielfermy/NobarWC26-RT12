@@ -81,16 +81,16 @@ export function NearestMatchesPredictions({ nearestMatches, allPredictions }: Ne
                       key={pred.id}
                       className="flex items-center justify-between p-2 rounded-lg bg-background/50 border border-border/30"
                     >
-                      <div className="flex items-center space-x-2 max-w-[70%]">
-                        <div className="h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[8px] shrink-0">
-                          {pred.profiles?.name ? pred.profiles.name.substring(0, 1).toUpperCase() : "?"}
-                        </div>
+                      <span className="font-mono text-[10px] font-black bg-muted px-2 py-0.5 rounded border border-border/20 text-foreground w-8 text-center shrink-0">
+                        {pred.predicted_score_a}
+                      </span>
+                      <div className="flex items-center justify-center space-x-1.5 max-w-[65%] truncate px-2 flex-1">
                         <span className="text-[11px] font-bold text-foreground truncate">
                           {pred.profiles?.name || "Warga"}
                         </span>
                       </div>
-                      <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/20 text-foreground shrink-0">
-                        {pred.predicted_score_a} - {pred.predicted_score_b}
+                      <span className="font-mono text-[10px] font-black bg-muted px-2 py-0.5 rounded border border-border/20 text-foreground w-8 text-center shrink-0">
+                        {pred.predicted_score_b}
                       </span>
                     </div>
                   ))
