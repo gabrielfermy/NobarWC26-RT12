@@ -134,6 +134,7 @@ interface Profile {
   phone_number: string;
   role: string;
   created_at: string;
+  auth_user_id?: string | null;
 }
 
 interface Transaction {
