@@ -209,7 +209,7 @@ export function UpcomingMatches({
                         onClick={() => router.push(user ? "/my-predictions?tab=new" : "/login")}
                         className="w-full text-[11px] h-8 font-bold bg-primary hover:bg-primary/90 text-white mt-1"
                       >
-                        Tebak Skor (Get Out Now)
+                        Tebak Skor
                       </Button>
                     )}
                   </div>
