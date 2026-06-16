@@ -101,6 +101,25 @@ const getFlagUrl = (teamName: string) => {
   return `https://flagcdn.com/w80/${code}.png`;
 };
 
+const getStadiumCountry = (stadiumName: string) => {
+  const nameLower = (stadiumName || "").toLowerCase();
+  if (nameLower.includes("estadio bbva") || 
+      nameLower.includes("estadio banorte") || 
+      nameLower.includes("estadio akron") || 
+      nameLower.includes("estadio azteca") || 
+      nameLower.includes("mexico") || 
+      nameLower.includes("meksiko")) {
+    return { name: "Meksiko", code: "mx" };
+  }
+  if (nameLower.includes("bmo field") || 
+      nameLower.includes("bc place") || 
+      nameLower.includes("canada") || 
+      nameLower.includes("kanada")) {
+    return { name: "Kanada", code: "ca" };
+  }
+  return { name: "Amerika Serikat", code: "us" };
+};
+
 export default function NobarPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,6 +191,8 @@ export default function NobarPage() {
                 {upcomingNobar.map((match) => {
                   const flagA = getFlagUrl(match.team_a);
                   const flagB = getFlagUrl(match.team_b);
+                  const stadiumCountry = getStadiumCountry(match.stadium);
+                  const stadiumFlag = getFlagUrl(stadiumCountry.name);
                   const formattedDate = new Date(match.match_time).toLocaleString("id-ID", {
                     weekday: "long",
                     day: "numeric",
@@ -220,7 +241,17 @@ export default function NobarPage() {
                         <div className="space-y-0.5">
                           <span className="text-[10px] text-primary font-bold uppercase tracking-wider block">Lokasi Nobar:</span>
                           <span className="text-xs font-bold text-foreground">{match.nobar_location || "Pos Ronda RT 12"}</span>
-                          <span className="text-[10px] text-muted-foreground block">Stadion Asli: {match.stadium}</span>
+                          <span className="text-[10px] text-muted-foreground flex items-center space-x-1 mt-0.5">
+                            <span>Stadion Asli: {match.stadium}</span>
+                            {stadiumCountry && (
+                              <span className="inline-flex items-center space-x-0.5 bg-muted px-1 rounded text-[8px] font-bold">
+                                {stadiumFlag && (
+                                  <img src={stadiumFlag} alt="" className="w-3.5 h-2 object-cover rounded-xs border border-border/20" />
+                                )}
+                                <span>{stadiumCountry.name}</span>
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -241,6 +272,8 @@ export default function NobarPage() {
                 {pastNobar.map((match) => {
                   const flagA = getFlagUrl(match.team_a);
                   const flagB = getFlagUrl(match.team_b);
+                  const stadiumCountry = getStadiumCountry(match.stadium);
+                  const stadiumFlag = getFlagUrl(stadiumCountry.name);
                   const formattedDate = new Date(match.match_time).toLocaleString("id-ID", {
                     weekday: "long",
                     day: "numeric",
@@ -285,10 +318,23 @@ export default function NobarPage() {
                         </div>
                       </div>
 
-                      <div className="bg-muted/30 p-2.5 rounded-lg border border-border/30 flex items-start space-x-2 text-[11px] text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                        <div>
-                          <span>Nobar diadakan di <strong>{match.nobar_location || "Pos Ronda RT 12"}</strong></span>
+                      <div className="bg-muted/30 p-2.5 rounded-lg border border-border/30 flex flex-col space-y-1 text-[11px] text-muted-foreground">
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <div>
+                            <span>Nobar diadakan di <strong>{match.nobar_location || "Pos Ronda RT 12"}</strong></span>
+                          </div>
+                        </div>
+                        <div className="text-[10px] pl-5 text-muted-foreground/85 flex items-center space-x-1">
+                          <span>Stadion Asli: {match.stadium}</span>
+                          {stadiumCountry && (
+                            <span className="inline-flex items-center space-x-0.5 bg-muted/60 px-1 rounded text-[8px] font-bold">
+                              {stadiumFlag && (
+                                <img src={stadiumFlag} alt="" className="w-3.5 h-2 object-cover rounded-xs border border-border/20" />
+                              )}
+                              <span>{stadiumCountry.name}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
