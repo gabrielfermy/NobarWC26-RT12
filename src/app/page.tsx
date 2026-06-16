@@ -312,7 +312,7 @@ export default function Home() {
               <RecentMatches
                 matches={matches}
                 loading={loading}
-                getMatchPredictionSummary={getMatchPredictionSummary}
+                allPredictions={allPredictions}
               />
 
               {/* Upcoming Matches */}
@@ -322,7 +322,7 @@ export default function Home() {
                 profile={profile}
                 user={user}
                 router={router}
-                getMatchPredictionSummary={getMatchPredictionSummary}
+                allPredictions={allPredictions}
               />
             </>
           ) : (
