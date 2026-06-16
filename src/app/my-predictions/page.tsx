@@ -47,7 +47,7 @@ const countryCodes: Record<string, string> = {
   "Ekuador": "ec", "Ecuador": "ec",
   "Wales": "gb-wls",
   "Ukraina": "ua", "Ukraine": "ua",
-  "Turki": "tr", "Turkey": "tr",
+  "Turki": "tr", "Turkey": "tr", "Türkiye": "tr", "Turkiye": "tr",
   "Swedia": "se", "Sweden": "se",
   "Austria": "at",
   "Hongaria": "hu", "Hungary": "hu",
