@@ -1,0 +1,357 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Match, Profile } from "../types";
+
+interface OfflineCheckoutTabProps {
+  matches: Match[];
+  users: Profile[];
+  supabase: any;
+  setLoading: (val: boolean) => void;
+  setReceiptData: (val: { transaction: any; predictions: any[] } | null) => void;
+  loadAllData: () => Promise<void>;
+}
+
+export default function OfflineCheckoutTab({
+  matches,
+  users,
+  supabase,
+  setLoading,
+  setReceiptData,
+  loadAllData,
+}: OfflineCheckoutTabProps) {
+  const [waNumber, setWaNumber] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isExistingUser, setIsExistingUser] = useState(false);
+  const [selectedMatchId, setSelectedMatchId] = useState("");
+  const [predScoreA, setPredScoreA] = useState("0");
+  const [predScoreB, setPredScoreB] = useState("0");
+  const [offlinePredictions, setOfflinePredictions] = useState<any[]>([]);
+
+  // WhatsApp Auto-Lookup
+  useEffect(() => {
+    if (waNumber.length >= 9) {
+      const cleanPhone = waNumber.trim().replace(/[-+ ]/g, "");
+      const matchProfile = users.find((u) => u.phone_number === cleanPhone);
+      if (matchProfile) {
+        setFullName(matchProfile.name);
+        setIsExistingUser(true);
+      } else {
+        setIsExistingUser(false);
+      }
+    } else {
+      setIsExistingUser(false);
+    }
+  }, [waNumber, users]);
+
+  // Handle Offline Prediction Basket
+  const addOfflinePrediction = () => {
+    if (!selectedMatchId) {
+      alert("Pilih pertandingan terlebih dahulu.");
+      return;
+    }
+    const match = matches.find((m) => m.id === selectedMatchId);
+    if (!match) return;
+
+    // Hitung berapa tebakan untuk laga ini di basket saat ini
+    const countForMatch = offlinePredictions.filter((p) => p.matchId === selectedMatchId).length;
+    if (countForMatch >= 5) {
+      alert("Maksimal 5 tebakan per pertandingan untuk warga.");
+      return;
+    }
+
+    setOfflinePredictions([
+      ...offlinePredictions,
+      {
+        matchId: selectedMatchId,
+        team_a: match.team_a,
+        team_b: match.team_b,
+        stage: match.stage,
+        score_a: parseInt(predScoreA) || 0,
+        score_b: parseInt(predScoreB) || 0,
+      },
+    ]);
+  };
+
+  const removeOfflinePrediction = (idx: number) => {
+    const updated = [...offlinePredictions];
+    updated.splice(idx, 1);
+    setOfflinePredictions(updated);
+  };
+
+  // Submit Offline Checkout
+  const handleOfflineCheckout = async () => {
+    if (!fullName.trim() || !waNumber.trim()) {
+      alert("Nama dan Nomor WhatsApp wajib diisi.");
+      return;
+    }
+    if (offlinePredictions.length === 0) {
+      alert("Keranjang tebakan kosong.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cleanPhone = waNumber.trim().replace(/[-+ ]/g, "");
+      let userId: string;
+
+      // 1. Dapatkan / Buat Profil
+      const matchProfile = users.find((u) => u.phone_number === cleanPhone);
+      if (matchProfile) {
+        userId = matchProfile.id;
+      } else {
+        // Buat profil offline baru (auth_user_id null)
+        const { data: newProfile, error: profileErr } = await supabase
+          .from("profiles")
+          .insert({
+            name: fullName.trim(),
+            phone_number: cleanPhone,
+            role: "user",
+          })
+          .select()
+          .single();
+        if (profileErr) throw profileErr;
+        userId = newProfile.id;
+      }
+
+      // 2. Buat Transaksi
+      const amount = offlinePredictions.length * 10000;
+      const { data: newTx, error: txErr } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: userId,
+          amount,
+          payment_status: "paid",
+          payment_method: "cash",
+          transaction_reference: `OFFLINE-BY-ADMIN`,
+        })
+        .select()
+        .single();
+      if (txErr) throw txErr;
+
+      // 3. Masukkan Prediksi
+      const predictionsPayload = offlinePredictions.map((p) => ({
+        user_id: userId,
+        match_id: p.matchId,
+        predicted_score_a: p.score_a,
+        predicted_score_b: p.score_b,
+        transaction_id: newTx.id,
+      }));
+
+      const { error: predErr } = await supabase.from("predictions").insert(predictionsPayload);
+      if (predErr) throw predErr;
+
+      alert("Transaksi tunai sukses terdaftar!");
+
+      // Load print receipt
+      const receiptTx = {
+        id: newTx.id,
+        amount,
+        payment_status: "paid",
+        payment_method: "cash",
+        created_at: newTx.created_at,
+        profiles: { name: fullName, phone_number: cleanPhone },
+      };
+      const receiptPreds = offlinePredictions.map((p) => ({
+        match_id: p.matchId,
+        team_a: p.team_a,
+        team_b: p.team_b,
+        predicted_score_a: p.score_a,
+        predicted_score_b: p.score_b,
+        stage: p.stage,
+      }));
+
+      // Set & triggers print
+      setReceiptData({ transaction: receiptTx, predictions: receiptPreds });
+      setTimeout(() => {
+        window.print();
+      }, 500);
+
+      // Reset Form
+      setWaNumber("");
+      setFullName("");
+      setOfflinePredictions([]);
+      await loadAllData();
+    } catch (err: any) {
+      console.error("Offline checkout failed:", err);
+      alert(err.message || "Gagal memproses transaksi offline.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Form Input Data Warga & Tambah Tebakan */}
+      <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold flex items-center space-x-2 border-b border-border pb-3">
+          <Plus className="h-5 w-5 text-primary" />
+          <span>Form Input Prediksi Tunai Offline</span>
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+              Nomor WhatsApp Warga
+            </label>
+            <input
+              type="tel"
+              required
+              placeholder="0812xxxxxxxx"
+              value={waNumber}
+              onChange={(e) => setWaNumber(e.target.value)}
+              className="block w-full px-3 py-2 bg-background border border-input rounded-lg text-sm placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex justify-between">
+              <span>Nama Lengkap Warga</span>
+              {isExistingUser && (
+                <span className="text-[10px] text-green-500 font-bold bg-green-500/10 px-1.5 rounded uppercase">
+                  Warga Terdaftar
+                </span>
+              )}
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Nama Lengkap"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              disabled={isExistingUser}
+              className="block w-full px-3 py-2 bg-background border border-input rounded-lg text-sm placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary text-foreground disabled:opacity-60"
+            />
+          </div>
+        </div>
+
+        <div className="border-t border-border/50 pt-6 space-y-4">
+          <h4 className="font-bold text-sm">Pilih & Masukkan Skor Tebakan</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            {/* Pilih Pertandingan */}
+            <div className="md:col-span-2">
+              <label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                Pertandingan
+              </label>
+              <select
+                value={selectedMatchId}
+                onChange={(e) => setSelectedMatchId(e.target.value)}
+                className="block w-full px-3 py-2 bg-background border border-input rounded-lg text-xs text-foreground focus:ring-2 focus:ring-primary"
+              >
+                <option value="">-- Pilih Pertandingan --</option>
+                {matches
+                  .filter((m) => m.status === "scheduled")
+                  .map((m) => {
+                    const formattedDate = new Date(m.match_time)
+                      .toLocaleString("id-ID", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                      .replace(/\./g, ":");
+                    return (
+                      <option key={m.id} value={m.id}>
+                        [{m.stage}] {m.team_a} vs {m.team_b} ({formattedDate} WIB)
+                      </option>
+                    );
+                  })}
+              </select>
+            </div>
+
+            {/* Input Skor */}
+            <div className="flex items-center space-x-2">
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={predScoreA}
+                  onChange={(e) => setPredScoreA(e.target.value)}
+                  className="w-full text-center py-1.5 border border-input bg-background rounded text-sm font-bold text-foreground"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground font-bold">-</span>
+              <div className="flex-1">
+                <input
+                  type="number"
+                  value={predScoreB}
+                  onChange={(e) => setPredScoreB(e.target.value)}
+                  className="w-full text-center py-1.5 border border-input bg-background rounded text-sm font-bold text-foreground"
+                />
+              </div>
+              <Button size="sm" onClick={addOfflinePrediction} className="shrink-0 h-9">
+                Tambah
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Keranjang Checkout Tunai */}
+      <div className="rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold flex items-center space-x-2 border-b border-border pb-3">
+          <span>Keranjang Tebakan Tunai</span>
+        </h3>
+
+        {offlinePredictions.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground text-xs">
+            Keranjang kosong. Tambahkan prediksi di sebelah kiri.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {offlinePredictions.map((pred, idx) => (
+                <div
+                  key={idx}
+                  className="flex justify-between items-center bg-background/50 p-2.5 rounded-lg border border-border/30 text-xs"
+                >
+                  <div>
+                    <div className="font-bold text-foreground">
+                      {pred.team_a} vs {pred.team_b}
+                    </div>
+                    <div className="text-muted-foreground text-[10px]">{pred.stage}</div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded text-sm">
+                      {pred.score_a} - {pred.score_b}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeOfflinePrediction(idx)}
+                      className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-border pt-4 space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Nama Warga:</span>
+                <span className="font-bold text-foreground">{fullName || "-"}</span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Total Tebakan:</span>
+                <span>{offlinePredictions.length} Item</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold pt-2 border-t border-border/40">
+                <span>Total Tunai Diterima:</span>
+                <span className="text-primary text-base">
+                  Rp {(offlinePredictions.length * 10000).toLocaleString("id-ID")}
+                </span>
+              </div>
+            </div>
+
+            <Button onClick={handleOfflineCheckout} className="w-full mt-2">
+              Bayar Tunai & Cetak Struk
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

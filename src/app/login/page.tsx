@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Shield, Key, ArrowRight, Flame } from "lucide-react";
+import { Shield, Key, ArrowRight, Flame, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState(""); // Bisa Email atau WhatsApp
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -106,21 +107,38 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="text-xs font-semibold text-muted-foreground block">
+                  Password
+                </label>
+                <a
+                  href={`https://wa.me/628139506092?text=Halo%20Admin%20Ashvin%2C%20saya%20lupa%20password%20untuk%20akun%20Nobar%20RT%2012.%20Bisa%20bantu%20reset%20password%20saya%3F%20WhatsApp%20saya%3A%20${encodeURIComponent(identifier || "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary font-semibold hover:underline"
+                >
+                  Lupa Password?
+                </a>
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Key className="h-4 w-4 text-muted-foreground/60" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2.5 bg-background border border-input rounded-lg text-sm placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
+                  className="block w-full pl-10 pr-10 py-2.5 bg-background border border-input rounded-lg text-sm placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
           </div>
