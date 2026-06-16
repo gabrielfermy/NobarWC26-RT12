@@ -1,6 +1,5 @@
-"use client";
-
-import { Calendar, Search, Shield, MapPin, Edit3 } from "lucide-react";
+import { useState } from "react";
+import { Calendar, Search, Shield, MapPin, Edit3, Users, X, Check, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Match } from "../types";
 
@@ -27,6 +26,7 @@ interface ManageMatchesTabProps {
   startEditingMatch: (match: Match) => void;
   getFlagUrl: (teamName: string) => string | null;
   getStadiumCountry: (stadiumName: string) => { name: string; code: string } | null;
+  allPaidPredictions?: any[];
 }
 
 export default function ManageMatchesTab({
@@ -52,7 +52,49 @@ export default function ManageMatchesTab({
   startEditingMatch,
   getFlagUrl,
   getStadiumCountry,
+  allPaidPredictions = [],
 }: ManageMatchesTabProps) {
+  const [detailMatchId, setDetailMatchId] = useState<string | null>(null);
+
+  const getMatchPoolStats = (
+    matchId: string,
+    actualScoreA: number | null,
+    actualScoreB: number | null
+  ) => {
+    const matchPaidPreds = allPaidPredictions.filter((p) => p.match_id === matchId);
+    const totalGuesses = matchPaidPreds.length;
+    const grossPool = totalGuesses * 10000;
+
+    let winnersCount = 0;
+    let prizePerWinner = 0;
+    let hostFeePerWinner = 0;
+
+    if (actualScoreA !== null && actualScoreB !== null) {
+      const correctPreds = matchPaidPreds.filter(
+        (p) => p.predicted_score_a === actualScoreA && p.predicted_score_b === actualScoreB
+      );
+      winnersCount = correctPreds.length;
+      if (winnersCount > 0) {
+        const potentialShare = grossPool / winnersCount;
+        if (potentialShare > 20000) {
+          hostFeePerWinner = potentialShare * 0.1;
+          prizePerWinner = potentialShare * 0.9;
+        } else {
+          hostFeePerWinner = 0;
+          prizePerWinner = potentialShare;
+        }
+      }
+    }
+
+    return {
+      totalGuesses,
+      grossPool,
+      winnersCount,
+      prizePerWinner,
+      hostFeePerWinner,
+    };
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
@@ -275,15 +317,26 @@ export default function ManageMatchesTab({
                       </div>
                     </div>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => startEditingMatch(match)}
-                      className="h-7 text-[10px] text-primary hover:bg-primary/10"
-                    >
-                      <Edit3 className="h-3 w-3 mr-1" />
-                      Ubah Hasil
-                    </Button>
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDetailMatchId(match.id)}
+                        className="h-7 text-[10px] text-muted-foreground hover:text-foreground hover:bg-secondary/20 flex items-center"
+                      >
+                        <Users className="h-3.5 w-3.5 mr-1" />
+                        Tebakan & Pemenang
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditingMatch(match)}
+                        className="h-7 text-[10px] text-primary hover:bg-primary/10"
+                      >
+                        <Edit3 className="h-3 w-3 mr-1" />
+                        Ubah Hasil
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -291,6 +344,134 @@ export default function ManageMatchesTab({
           })
         )}
       </div>
+
+      {/* Modal Detail Tebakan Warga */}
+      {detailMatchId && (() => {
+        const detailMatch = matches.find((m) => m.id === detailMatchId);
+        if (!detailMatch) return null;
+
+        const detailPreds = allPaidPredictions.filter((p) => p.match_id === detailMatchId);
+        const stats = getMatchPoolStats(detailMatch.id, detailMatch.score_a, detailMatch.score_b);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-border pb-3.5">
+                <div>
+                  <h3 className="font-black text-lg text-foreground flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    <span>Detail Tebakan Laga</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {detailMatch.team_a} vs {detailMatch.team_b} ({detailMatch.stage})
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDetailMatchId(null)}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Pool Summary Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-secondary/10 border border-border/40 p-3.5 rounded-xl my-4 text-center">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">Total Tebakan</span>
+                  <p className="text-sm sm:text-base font-black text-foreground">{stats.totalGuesses} pcs</p>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">Total Pool</span>
+                  <p className="text-sm sm:text-base font-black text-green-500">Rp {stats.grossPool.toLocaleString("id-ID")}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">Pemenang</span>
+                  <p className="text-sm sm:text-base font-black text-amber-500">{stats.winnersCount} org</p>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">Hadiah / Org</span>
+                  <p className="text-sm sm:text-base font-black text-primary">Rp {Math.floor(stats.prizePerWinner).toLocaleString("id-ID")}</p>
+                </div>
+              </div>
+
+              {/* Predictions List */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 my-2">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  Daftar Tebakan Warga ({detailPreds.length})
+                </h4>
+                {detailPreds.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground text-xs border border-dashed border-border/40 rounded-xl">
+                    Belum ada tebakan lunas (paid) untuk pertandingan ini.
+                  </div>
+                ) : (
+                  detailPreds.map((pred) => {
+                    const isCompleted = detailMatch.status === "completed";
+                    const isWinner = isCompleted &&
+                      pred.predicted_score_a === detailMatch.score_a &&
+                      pred.predicted_score_b === detailMatch.score_b;
+
+                    return (
+                      <div
+                        key={pred.id}
+                        className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                          isWinner
+                            ? "bg-green-500/10 border-green-500/30 text-green-500"
+                            : isCompleted
+                            ? "bg-muted/40 border-border/40 opacity-70"
+                            : "bg-background border-border/60"
+                        }`}
+                      >
+                        <div>
+                          <p className="font-bold text-xs sm:text-sm text-foreground">
+                            {pred.profiles?.name || "Warga Tanpa Nama"}
+                          </p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                            WA: {pred.profiles?.phone_number || "-"}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <span className="font-mono font-black text-xs bg-muted/80 px-2 py-0.5 rounded border border-border/20 text-foreground">
+                            {pred.predicted_score_a} - {pred.predicted_score_b}
+                          </span>
+                          {isCompleted ? (
+                            isWinner ? (
+                              <span className="bg-green-500 text-white font-bold text-[8px] sm:text-[9px] px-2 py-0.5 rounded uppercase flex items-center shrink-0">
+                                <Award className="h-3 w-3 mr-0.5 shrink-0" />
+                                Winner (+Rp {Math.floor(stats.prizePerWinner).toLocaleString("id-ID")})
+                              </span>
+                            ) : (
+                              <span className="bg-muted text-muted-foreground font-semibold text-[8px] sm:text-[9px] px-2 py-0.5 rounded uppercase shrink-0">
+                                Gugur
+                              </span>
+                            )
+                          ) : (
+                            <span className="bg-green-500/20 text-green-500 border border-green-500/30 font-bold text-[8px] sm:text-[9px] px-2 py-0.5 rounded uppercase shrink-0">
+                              Aktif
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-border pt-4 mt-4 flex justify-end">
+                <Button onClick={() => setDetailMatchId(null)} className="font-bold px-5">
+                  Tutup
+                </Button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

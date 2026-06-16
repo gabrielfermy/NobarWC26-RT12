@@ -307,6 +307,10 @@ export default function AdminPage() {
         match_id,
         predicted_score_a,
         predicted_score_b,
+        profiles (
+          name,
+          phone_number
+        ),
         transactions!inner (
           payment_status
         )
@@ -855,6 +859,7 @@ export default function AdminPage() {
               startEditingMatch={startEditingMatch}
               getFlagUrl={getFlagUrl}
               getStadiumCountry={getStadiumCountry}
+              allPaidPredictions={allPaidPredictions}
             />
           )}
 

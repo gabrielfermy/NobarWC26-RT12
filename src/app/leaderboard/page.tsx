@@ -91,8 +91,10 @@ export default function LeaderboardPage() {
           };
         });
 
-        // 3. Bangun data leaderboard per profil warga
-        const leaderboardData: LeaderboardEntry[] = profiles.map((profile) => {
+        // 3. Bangun data leaderboard per profil warga (kecuali admin)
+        const leaderboardData: LeaderboardEntry[] = profiles
+          .filter((profile) => profile.role !== "admin")
+          .map((profile) => {
           const userPredictions = predictions.filter(p => p.user_id === profile.id);
           let totalWins = 0;
           let totalWinnings = 0;
