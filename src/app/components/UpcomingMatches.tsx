@@ -136,17 +136,17 @@ export function UpcomingMatches({
                 </div>
 
                 {/* Flag VS Flag Display */}
-                <div className="flex items-center justify-between py-1">
+                <div className="flex items-start justify-between py-1">
                   <div className="flex flex-col items-center space-y-1.5 w-[42%] text-center">
                     {flagA ? (
                       <img src={flagA} alt="" className="w-10 h-6.5 object-cover rounded shadow border border-border/20" />
                     ) : (
                       <Shield className="w-8 h-8 text-muted-foreground" />
                     )}
-                    <span className="font-bold text-xs truncate max-w-full">{match.team_a}</span>
+                    <span className="font-bold text-xs max-w-full">{match.team_a}</span>
                   </div>
 
-                  <div className="text-[10px] font-black text-muted-foreground bg-muted px-2.5 py-1 rounded">VS</div>
+                  <div className="text-[10px] font-black text-muted-foreground bg-muted px-2.5 py-1 rounded mt-1">VS</div>
 
                   <div className="flex flex-col items-center space-y-1.5 w-[42%] text-center">
                     {flagB ? (
@@ -154,7 +154,7 @@ export function UpcomingMatches({
                     ) : (
                       <Shield className="w-8 h-8 text-muted-foreground" />
                     )}
-                    <span className="font-bold text-xs truncate max-w-full">{match.team_b}</span>
+                    <span className="font-bold text-xs max-w-full">{match.team_b}</span>
                   </div>
                 </div>
 

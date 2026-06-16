@@ -60,13 +60,13 @@ export function RecentMatches({ matches, loading, getMatchPredictionSummary }: R
                 </div>
 
                 <div className="flex items-center justify-between py-1">
-                  <div className="flex items-center space-x-3 w-[40%]">
+                  <div className="flex items-start space-x-3 w-[40%]">
                     {flagA ? (
-                      <img src={flagA} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/20 shrink-0" />
+                      <img src={flagA} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/20 shrink-0 mt-0.5" />
                     ) : (
-                      <Shield className="w-5 h-5 text-muted-foreground shrink-0" />
+                      <Shield className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                     )}
-                    <span className="font-bold text-xs sm:text-sm truncate">{match.team_a}</span>
+                    <span className="font-bold text-xs sm:text-sm">{match.team_a}</span>
                   </div>
 
                   <div className="flex flex-col items-center justify-center px-3">
@@ -80,8 +80,8 @@ export function RecentMatches({ matches, loading, getMatchPredictionSummary }: R
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-end space-x-3 w-[40%] text-right">
-                    <span className="font-bold text-xs sm:text-sm truncate">{match.team_b}</span>
+                  <div className="flex items-start justify-end space-x-3 w-[40%] text-right">
+                    <span className="font-bold text-xs sm:text-sm">{match.team_b}</span>
                     {flagB ? (
                       <img src={flagB} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/20 shrink-0" />
                     ) : (

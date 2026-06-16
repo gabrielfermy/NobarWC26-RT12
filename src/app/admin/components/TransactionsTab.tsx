@@ -112,11 +112,12 @@ export default function TransactionsTab({
                     {/* Predictions count & preview */}
                     <td className="px-4 py-3">
                       <span className="font-semibold">{tx.predictions?.length || 0} Tebakan</span>
-                      <div className="text-[9px] text-muted-foreground max-w-[200px] truncate">
-                        {tx.predictions?.map(
-                          (p) =>
-                            `${p.matches?.team_a || ""} vs ${p.matches?.team_b || ""} (${p.predicted_score_a}-${p.predicted_score_b})`
-                        ).join(", ")}
+                      <div className="text-[9px] text-muted-foreground mt-1 space-y-0.5">
+                        {tx.predictions?.map((p, idx) => (
+                          <div key={idx}>
+                            • {p.matches?.team_a || ""} vs {p.matches?.team_b || ""} ({p.predicted_score_a}-{p.predicted_score_b})
+                          </div>
+                        ))}
                       </div>
                     </td>
                     {/* Method */}
