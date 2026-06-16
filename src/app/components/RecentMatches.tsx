@@ -50,6 +50,7 @@ export function RecentMatches({ matches, loading, allPredictions }: RecentMatche
               minute: "2-digit",
             }).replace(/\./g, ':');
             const matchPreds = allPredictions.filter((p) => p.match_id === match.id);
+            const hasBottomContent = matchPreds.length > 0;
 
             return (
               <div key={match.id} className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm flex flex-col justify-between">
@@ -108,47 +109,49 @@ export function RecentMatches({ matches, loading, allPredictions }: RecentMatche
                   </div>
                 </div>
 
-                <div className="space-y-2.5 mt-auto pt-2 border-t border-border/20">
-                  {(() => {
-                    const groups: Record<string, { scoreA: number; scoreB: number; count: number }> = {};
-                    matchPreds.forEach((p) => {
-                      const key = `${p.predicted_score_a}-${p.predicted_score_b}`;
-                      if (!groups[key]) {
-                        groups[key] = {
-                          scoreA: p.predicted_score_a,
-                          scoreB: p.predicted_score_b,
-                          count: 0,
-                        };
-                      }
-                      groups[key].count += 1;
-                    });
-                    const summary = Object.values(groups).sort((a, b) => b.count - a.count);
+                {hasBottomContent && (
+                  <div className="space-y-2.5 pt-2 border-t border-border/20 mt-1">
+                    {(() => {
+                      const groups: Record<string, { scoreA: number; scoreB: number; count: number }> = {};
+                      matchPreds.forEach((p) => {
+                        const key = `${p.predicted_score_a}-${p.predicted_score_b}`;
+                        if (!groups[key]) {
+                          groups[key] = {
+                            scoreA: p.predicted_score_a,
+                            scoreB: p.predicted_score_b,
+                            count: 0,
+                          };
+                        }
+                        groups[key].count += 1;
+                      });
+                      const summary = Object.values(groups).sort((a, b) => b.count - a.count);
 
-                    if (summary.length === 0) return null;
+                      if (summary.length === 0) return null;
 
-                    return (
-                      <div className="space-y-1.5">
-                        <span className="text-[9px] font-bold text-muted-foreground block text-center">Tebakan Terpopuler</span>
-                        <div className="space-y-1 max-h-[100px] overflow-y-auto pr-0.5">
-                          {summary.map((item, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-background/50 border border-border/20">
-                              <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/10 text-foreground w-6 text-center shrink-0">
-                                {item.scoreA}
-                              </span>
-                              <span className="text-[10px] font-bold text-foreground text-center flex-1 px-1 flex items-center justify-center space-x-1">
-                                <span>👤</span>
-                                <span>{item.count}</span>
-                              </span>
-                              <span className="font-mono text-[10px] font-black bg-muted px-1.5 py-0.5 rounded border border-border/10 text-foreground w-6 text-center shrink-0">
-                                {item.scoreB}
-                              </span>
-                            </div>
-                          ))}
+                      return (
+                        <div className="space-y-1.5">
+                          <span className="text-[9px] font-bold text-muted-foreground block text-center mb-1">Tebakan Terpopuler</span>
+                          <div className="max-h-[100px] overflow-y-auto pr-0.5 divide-y divide-border/15">
+                            {summary.map((item, idx) => (
+                              <div key={idx} className="flex items-center justify-between py-1.5 text-xs font-bold text-foreground">
+                                <span className="font-mono text-[11px] font-bold text-center w-6 shrink-0">
+                                  {item.scoreA}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground text-center flex-1 px-1 flex items-center justify-center space-x-1">
+                                  <span>👤</span>
+                                  <span>{item.count}</span>
+                                </span>
+                                <span className="font-mono text-[11px] font-bold text-center w-6 shrink-0">
+                                  {item.scoreB}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })()}
-                </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             );
           })}
