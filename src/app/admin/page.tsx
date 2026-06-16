@@ -10,6 +10,109 @@ import {
 import { Button } from "@/components/ui/button";
 import { ReceiptPrint } from "@/components/ReceiptPrint";
 
+// Kamus Kode Negara ISO2 untuk Bendera (FlagCDN)
+const countryCodes: Record<string, string> = {
+  "Meksiko": "mx", "Mexico": "mx",
+  "Amerika Serikat": "us", "United States": "us",
+  "Kanada": "ca", "Canada": "ca",
+  "Afrika Selatan": "za", "South Africa": "za",
+  "Korea Selatan": "kr", "South Korea": "kr",
+  "Republik Ceko": "cz", "Czech Republic": "cz",
+  "Bosnia & Herzegovina": "ba", "Bosnia and Herzegovina": "ba",
+  "Arab Saudi": "sa", "Saudi Arabia": "sa",
+  "Prancis": "fr", "France": "fr",
+  "Australia": "au",
+  "Brasil": "br", "Brazil": "br",
+  "Kamerun": "cm", "Cameroon": "cm",
+  "Jerman": "de", "Germany": "de",
+  "Jepang": "jp", "Japan": "jp",
+  "Spanyol": "es", "Spain": "es",
+  "Kosta Rika": "cr", "Costa Rica": "cr",
+  "Inggris": "gb", "England": "gb",
+  "Iran": "ir",
+  "Argentina": "ar",
+  "Belanda": "nl", "Netherlands": "nl",
+  "Italia": "it", "Italy": "it",
+  "Belgia": "be", "Belgium": "be",
+  "Kroasia": "hr", "Croatia": "hr",
+  "Portugal": "pt",
+  "Uruguay": "uy",
+  "Kolombia": "co", "Colombia": "co",
+  "Maroko": "ma", "Morocco": "ma",
+  "Swiss": "ch", "Switzerland": "ch",
+  "Polandia": "pl", "Poland": "pl",
+  "Senegal": "sn",
+  "Denmark": "dk",
+  "Tunisia": "tn",
+  "Ekuador": "ec", "Ecuador": "ec",
+  "Wales": "gb-wls",
+  "Ukraina": "ua", "Ukraine": "ua",
+  "Turki": "tr", "Turkey": "tr",
+  "Swedia": "se", "Sweden": "se",
+  "Austria": "at",
+  "Hongaria": "hu", "Hungary": "hu",
+  "Skotlandia": "gb-sct", "Scotland": "gb-sct",
+  "Selandia Baru": "nz", "New Zealand": "nz",
+  "Peru": "pe",
+  "Cile": "cl", "Chile": "cl",
+  "Mesir": "eg", "Egypt": "eg",
+  "Nigeria": "ng",
+  "Aljazair": "dz", "Algeria": "dz",
+  "Ghana": "gh",
+  "Irak": "iq", "Iraq": "iq",
+  "Norwegia": "no", "Norway": "no",
+  "Qatar": "qa",
+  "Pantai Gading": "ci", "Ivory Coast": "ci",
+  "Haiti": "ht",
+  "Paraguay": "py",
+  "Curaçao": "cw", "Curacao": "cw",
+  "Tanjung Verde": "cv", "Cape Verde": "cv",
+  "Yordania": "jo", "Jordan": "jo",
+  "Kongo Demokratik": "cd", "Democratic Republic of the Congo": "cd", "Congo DR": "cd", "DR Congo": "cd", "Democratic Republic of...": "cd", "Democratic Re...": "cd",
+  "Uzbekistan": "uz",
+  "Panama": "pa",
+  "Tiongkok": "cn", "China": "cn",
+  "Jamaika": "jm", "Jamaica": "jm",
+  "Honduras": "hn",
+  "El Salvador": "sv",
+  "Venezuela": "ve",
+  "Bolivia": "bo",
+  "Mali": "ml",
+  "Oman": "om",
+  "Uni Emirat Arab": "ae", "United Arab Emirates": "ae", "UAE": "ae",
+  "Bahrain": "bh",
+  "Suriah": "sy", "Syria": "sy",
+  "Palestina": "ps", "Palestine": "ps",
+  "Kirgistan": "kg", "Kyrgyzstan": "kg",
+  "Tajikistan": "tj",
+  "India": "in"
+};
+
+const getFlagUrl = (teamName: string) => {
+  const code = countryCodes[teamName];
+  if (!code) return null;
+  return `https://flagcdn.com/w80/${code}.png`;
+};
+
+const getStadiumCountry = (stadiumName: string) => {
+  const nameLower = (stadiumName || "").toLowerCase();
+  if (nameLower.includes("estadio bbva") || 
+      nameLower.includes("estadio banorte") || 
+      nameLower.includes("estadio akron") || 
+      nameLower.includes("estadio azteca") || 
+      nameLower.includes("mexico") || 
+      nameLower.includes("meksiko")) {
+    return { name: "Meksiko", code: "mx" };
+  }
+  if (nameLower.includes("bmo field") || 
+      nameLower.includes("bc place") || 
+      nameLower.includes("canada") || 
+      nameLower.includes("kanada")) {
+    return { name: "Kanada", code: "ca" };
+  }
+  return { name: "Amerika Serikat", code: "us" };
+};
+
 interface Match {
   id: string;
   team_a: string;
@@ -1202,6 +1305,11 @@ export default function AdminPage() {
                     minute: "2-digit",
                   }).replace(/\./g, ':');
 
+                  const flagA = getFlagUrl(match.team_a);
+                  const flagB = getFlagUrl(match.team_b);
+                  const stadiumCountry = getStadiumCountry(match.stadium);
+                  const stadiumFlag = getFlagUrl(stadiumCountry.name);
+
                   return (
                     <div 
                       key={match.id} 
@@ -1220,7 +1328,14 @@ export default function AdminPage() {
 
                       {/* Line Up Info & Editing Inputs */}
                       <div className="flex items-center justify-between py-1 text-xs">
-                        <span className="font-semibold truncate max-w-[35%]">{match.team_a}</span>
+                        <div className="flex items-center space-x-2 max-w-[38%] truncate">
+                          {flagA ? (
+                            <img src={flagA} alt="" className="w-6 h-4 object-cover rounded border border-border/40 shrink-0" />
+                          ) : (
+                            <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span className="font-semibold truncate">{match.team_a}</span>
+                        </div>
 
                         {isEditing ? (
                           <div className="flex items-center space-x-1">
@@ -1250,14 +1365,29 @@ export default function AdminPage() {
                           </div>
                         )}
 
-                        <span className="font-semibold truncate max-w-[35%] text-right">{match.team_b}</span>
+                        <div className="flex items-center justify-end space-x-2 max-w-[38%] truncate text-right">
+                          <span className="font-semibold truncate">{match.team_b}</span>
+                          {flagB ? (
+                            <img src={flagB} alt="" className="w-6 h-4 object-cover rounded border border-border/40 shrink-0" />
+                          ) : (
+                            <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                        </div>
                       </div>
 
                       {/* Stadium */}
                       <div className="text-[10px] text-muted-foreground flex items-center justify-between border-t border-border/30 pt-2.5">
-                        <div className="flex items-center">
+                        <div className="flex items-center max-w-[75%]">
                           <MapPin className="h-3 w-3 mr-1 text-primary shrink-0" />
-                          <span className="truncate max-w-[150px]">{match.stadium}</span>
+                          <span className="truncate mr-1.5">{match.stadium}</span>
+                          {stadiumCountry && (
+                            <span className="inline-flex items-center space-x-1 bg-muted px-1.5 py-0.5 rounded text-[8px] font-bold shrink-0">
+                              {stadiumFlag && (
+                                <img src={stadiumFlag} alt="" className="w-4.5 h-3 object-cover rounded-sm border border-border/20" />
+                              )}
+                              <span>{stadiumCountry.name}</span>
+                            </span>
+                          )}
                         </div>
                         
                         {/* Status Badge */}
