@@ -124,11 +124,15 @@ export function UpcomingMatches({
               <div key={match.id} className="w-full bg-card border border-border rounded-xl p-4 space-y-3 shadow-sm flex flex-col justify-between">
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
                   <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">{match.stage}</span>
-                  <span>{formattedDate}</span>
+                  <span>{formattedDate} | {formattedTime} WIB</span>
                 </div>
 
-                <div className="text-center text-[10px] font-bold text-muted-foreground">
-                  World Cup Match
+                <div className="text-center text-[10px] font-medium text-muted-foreground flex items-center justify-center space-x-1 truncate max-w-full">
+                  <MapPin className="w-3 h-3 text-primary shrink-0" />
+                  <span className="truncate">{match.stadium}</span>
+                  {stadiumFlag && (
+                    <img src={stadiumFlag} alt="" className="w-3.5 h-2 object-cover rounded-xs border border-border/10 shrink-0" />
+                  )}
                 </div>
 
                 {/* Flag VS Flag Display */}
@@ -154,17 +158,6 @@ export function UpcomingMatches({
                   </div>
                 </div>
 
-                <div className="space-y-1 text-center text-[10px] text-muted-foreground">
-                  <div>Time: {formattedTime}</div>
-                  <div className="flex items-center justify-center space-x-1 truncate max-w-full">
-                    <MapPin className="w-3 h-3 text-primary shrink-0" />
-                    <span className="truncate">{match.stadium}</span>
-                    {stadiumFlag && (
-                      <img src={stadiumFlag} alt="" className="w-3.5 h-2 object-cover rounded-xs border border-border/10 shrink-0" />
-                    )}
-                  </div>
-                </div>
-
                 {/* Prediction summary */}
                 {(() => {
                   const summary = getMatchPredictionSummary(match.id);
@@ -187,7 +180,7 @@ export function UpcomingMatches({
                 {!isBettingClosed && (!profile || profile.role !== "admin") && (
                   <Button
                     onClick={() => router.push(user ? "/my-predictions?tab=new" : "/login")}
-                    className="w-full text-[11px] h-8 font-bold bg-primary hover:bg-primary/90 text-white"
+                    className="w-full text-[11px] h-8 font-bold bg-primary hover:bg-primary/90 text-white mt-1"
                   >
                     Tebak Skor (Get Out Now)
                   </Button>
