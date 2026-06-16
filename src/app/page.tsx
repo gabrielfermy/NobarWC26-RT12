@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Calendar, Trophy, Users, AlertCircle, ShoppingCart, UserCheck, Flame, Shield, Play, MapPin, Tv, Clock } from "lucide-react";
+import { Calendar, Trophy, Users, AlertCircle, ShoppingCart, UserCheck, Flame, Shield, Play, MapPin, Tv, Clock, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Kamus Kode Negara ISO2 untuk Bendera (FlagCDN)
@@ -140,6 +140,8 @@ export default function Home() {
   const [predictionsCart, setPredictionsCart] = useState<{ [matchId: string]: { score_a: number; score_b: number }[] }>({});
   const [paymentMethod, setPaymentMethod] = useState<"qris" | "cash">("qris");
   const [activeTab, setActiveTab] = useState<"laga" | "nobar">("laga");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Real database profiles & predictions state
   const [user, setUser] = useState<any>(null);
@@ -367,12 +369,40 @@ export default function Home() {
   };
 
 
+  const ITEMS_PER_PAGE = 9;
+
   const getUpcomingMatches = (): Match[] => {
     const now = Date.now();
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = matches
+      .filter((m) => m.status === "scheduled" && new Date(m.match_time).getTime() > now)
+      .filter((m) => {
+        if (!query) return true;
+        return (
+          m.team_a.toLowerCase().includes(query) ||
+          m.team_b.toLowerCase().includes(query) ||
+          m.stage.toLowerCase().includes(query) ||
+          (m.stadium || "").toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => new Date(a.match_time).getTime() - new Date(b.match_time).getTime());
+    return filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  };
+
+  const getUpcomingMatchesCount = (): number => {
+    const now = Date.now();
+    const query = searchQuery.toLowerCase().trim();
     return matches
       .filter((m) => m.status === "scheduled" && new Date(m.match_time).getTime() > now)
-      .sort((a, b) => new Date(a.match_time).getTime() - new Date(b.match_time).getTime())
-      .slice(0, 9);
+      .filter((m) => {
+        if (!query) return true;
+        return (
+          m.team_a.toLowerCase().includes(query) ||
+          m.team_b.toLowerCase().includes(query) ||
+          m.stage.toLowerCase().includes(query) ||
+          (m.stadium || "").toLowerCase().includes(query)
+        );
+      }).length;
   };
 
   // Dapatkan pertandingan terakhir (sedang berlangsung atau sudah selesai/di masa lalu)
@@ -385,7 +415,9 @@ export default function Home() {
   };
 
   const upcomingMatches = getUpcomingMatches();
+  const upcomingMatchesCount = getUpcomingMatchesCount();
   const recentMatches = getRecentMatches();
+  const totalUpcomingPages = Math.ceil(upcomingMatchesCount / ITEMS_PER_PAGE);
 
   const addPrediction = (matchId: string) => {
     const currentList = predictionsCart[matchId] || [];
@@ -670,12 +702,28 @@ export default function Home() {
 
               {/* 2. UPCOMING MATCHES - Horizontal Scroll Layout */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black uppercase tracking-wider text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/20 pb-2.5">
+                  <h2 className="text-sm font-black uppercase tracking-wider text-muted-foreground shrink-0">
                     Upcoming Matches
                   </h2>
-                  <Link href="/bracket" className="text-xs text-primary font-bold hover:underline">
-                    Bagan & Klasemen →
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:max-w-xs flex-1 sm:flex-initial">
+                    <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground/60" />
+                    <input
+                      type="text"
+                      placeholder="Cari negara, babak, stadion..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1); // Reset to page 1 on search
+                      }}
+                      className="block w-full pl-8 pr-3 py-1 bg-muted/60 border border-border/40 rounded-lg text-xs placeholder-muted-foreground/50 text-foreground focus:outline-none focus:ring-1 focus:ring-primary h-7.5"
+                    />
+                  </div>
+
+                  <Link href="/bracket" className="text-xs text-primary font-bold hover:underline shrink-0">
+                    Bagan & Klasemen &rarr;
                   </Link>
                 </div>
 
@@ -762,6 +810,33 @@ export default function Home() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalUpcomingPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-4 text-xs">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      className="h-8 text-[11px] font-bold text-foreground border-border/40 hover:bg-muted"
+                    >
+                      &larr; Sebelumnya
+                    </Button>
+                    <span className="text-muted-foreground font-medium">
+                      Halaman {currentPage} dari {totalUpcomingPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === totalUpcomingPages}
+                      onClick={() => setCurrentPage((prev) => Math.min(totalUpcomingPages, prev + 1))}
+                      className="h-8 text-[11px] font-bold text-foreground border-border/40 hover:bg-muted"
+                    >
+                      Berikutnya &rarr;
+                    </Button>
                   </div>
                 )}
               </div>
