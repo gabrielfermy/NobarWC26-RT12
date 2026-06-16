@@ -12,6 +12,7 @@ interface OfflineCheckoutTabProps {
   setLoading: (val: boolean) => void;
   setReceiptData: (val: { transaction: any; predictions: any[] } | null) => void;
   loadAllData: () => Promise<void>;
+  getFlagUrl?: (teamName: string) => string | null;
 }
 
 export default function OfflineCheckoutTab({
@@ -21,6 +22,7 @@ export default function OfflineCheckoutTab({
   setLoading,
   setReceiptData,
   loadAllData,
+  getFlagUrl,
 }: OfflineCheckoutTabProps) {
   const [waNumber, setWaNumber] = useState("");
   const [fullName, setFullName] = useState("");
@@ -29,6 +31,8 @@ export default function OfflineCheckoutTab({
   const [predScoreA, setPredScoreA] = useState("0");
   const [predScoreB, setPredScoreB] = useState("0");
   const [offlinePredictions, setOfflinePredictions] = useState<any[]>([]);
+
+  const selectedMatch = matches.find((m) => m.id === selectedMatchId);
 
   // WhatsApp Auto-Lookup
   useEffect(() => {
@@ -228,9 +232,9 @@ export default function OfflineCheckoutTab({
 
         <div className="border-t border-border/50 pt-6 space-y-4">
           <h4 className="font-bold text-sm">Pilih & Masukkan Skor Tebakan</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+          <div className="space-y-4">
             {/* Pilih Pertandingan */}
-            <div className="md:col-span-2">
+            <div>
               <label className="text-[10px] font-semibold text-muted-foreground block mb-1">
                 Pertandingan
               </label>
@@ -261,29 +265,62 @@ export default function OfflineCheckoutTab({
               </select>
             </div>
 
-            {/* Input Skor */}
-            <div className="flex items-center space-x-2">
-              <div className="flex-1">
-                <input
-                  type="number"
-                  value={predScoreA}
-                  onChange={(e) => setPredScoreA(e.target.value)}
-                  className="w-full text-center py-1.5 border border-input bg-background rounded text-sm font-bold text-foreground"
-                />
+            {/* Input Skor Visual dengan Bendera & Nama Tim */}
+            {selectedMatch && (
+              <div className="bg-background/40 border border-border/50 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* Team A Info */}
+                <div className="flex items-center space-x-3 w-full sm:w-[40%] justify-end text-right">
+                  <span className="font-bold text-sm text-foreground">{selectedMatch.team_a}</span>
+                  {getFlagUrl && getFlagUrl(selectedMatch.team_a) ? (
+                    <img
+                      src={getFlagUrl(selectedMatch.team_a)!}
+                      alt=""
+                      className="w-8 h-5 object-cover rounded shadow border border-border/10 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-5 bg-muted rounded border border-border flex items-center justify-center shrink-0" />
+                  )}
+                </div>
+
+                {/* Score Input Fields */}
+                <div className="flex items-center space-x-2 shrink-0">
+                  <input
+                    type="number"
+                    value={predScoreA}
+                    onChange={(e) => setPredScoreA(e.target.value)}
+                    className="w-12 h-9 text-center bg-background border border-input rounded-lg text-sm font-black text-foreground focus:ring-2 focus:ring-primary"
+                  />
+                  <span className="text-muted-foreground font-black">-</span>
+                  <input
+                    type="number"
+                    value={predScoreB}
+                    onChange={(e) => setPredScoreB(e.target.value)}
+                    className="w-12 h-9 text-center bg-background border border-input rounded-lg text-sm font-black text-foreground focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {/* Team B Info */}
+                <div className="flex items-center space-x-3 w-full sm:w-[40%] justify-start text-left">
+                  {getFlagUrl && getFlagUrl(selectedMatch.team_b) ? (
+                    <img
+                      src={getFlagUrl(selectedMatch.team_b)!}
+                      alt=""
+                      className="w-8 h-5 object-cover rounded shadow border border-border/10 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-5 bg-muted rounded border border-border flex items-center justify-center shrink-0" />
+                  )}
+                  <span className="font-bold text-sm text-foreground">{selectedMatch.team_b}</span>
+                </div>
+
+                {/* Add to Cart button */}
+                <div className="w-full sm:w-auto flex justify-center pt-2 sm:pt-0">
+                  <Button onClick={addOfflinePrediction} className="w-full sm:w-auto font-bold h-9">
+                    Tambah
+                  </Button>
+                </div>
               </div>
-              <span className="text-xs text-muted-foreground font-bold">-</span>
-              <div className="flex-1">
-                <input
-                  type="number"
-                  value={predScoreB}
-                  onChange={(e) => setPredScoreB(e.target.value)}
-                  className="w-full text-center py-1.5 border border-input bg-background rounded text-sm font-bold text-foreground"
-                />
-              </div>
-              <Button size="sm" onClick={addOfflinePrediction} className="shrink-0 h-9">
-                Tambah
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -827,6 +827,7 @@ export default function AdminPage() {
               setLoading={setLoading}
               setReceiptData={setReceiptData}
               loadAllData={loadAllData}
+              getFlagUrl={getFlagUrl}
             />
           )}
 
