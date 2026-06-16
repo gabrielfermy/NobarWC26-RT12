@@ -53,7 +53,7 @@ export function RecentMatches({ matches, loading, allPredictions }: RecentMatche
             const hasBottomContent = matchPreds.length > 0;
 
             return (
-              <div key={match.id} className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm flex flex-col justify-between">
+              <div key={match.id} className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm flex flex-col h-full">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
                     <span className="bg-muted px-2 py-0.5 rounded text-[9px] uppercase tracking-wider">
@@ -110,7 +110,7 @@ export function RecentMatches({ matches, loading, allPredictions }: RecentMatche
                 </div>
 
                 {hasBottomContent && (
-                  <div className="space-y-2.5 pt-2 border-t border-border/20 mt-1">
+                  <div className="space-y-2.5 pt-2 border-t border-border/20 mt-1 flex-1 flex flex-col justify-between">
                     {(() => {
                       const groups: Record<string, { scoreA: number; scoreB: number; count: number }> = {};
                       matchPreds.forEach((p) => {

@@ -123,7 +123,7 @@ export function UpcomingMatches({
             const hasBottomContent = matchPreds.length > 0 || (!isBettingClosed && (!profile || profile.role !== "admin"));
 
             return (
-              <div key={match.id} className="w-full bg-card border border-border rounded-xl p-4 space-y-3 shadow-sm flex flex-col justify-between">
+              <div key={match.id} className="w-full bg-card border border-border rounded-xl p-4 space-y-3 shadow-sm flex flex-col h-full">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
                     <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">{match.stage}</span>
@@ -163,7 +163,7 @@ export function UpcomingMatches({
                 </div>
 
                 {hasBottomContent && (
-                  <div className="space-y-2.5 pt-2 border-t border-border/20 mt-1">
+                  <div className="space-y-2.5 pt-2 border-t border-border/20 mt-1 flex-1 flex flex-col justify-between">
                     {(() => {
                       const groups: Record<string, { scoreA: number; scoreB: number; count: number }> = {};
                       matchPreds.forEach((p) => {
@@ -207,7 +207,7 @@ export function UpcomingMatches({
                     {!isBettingClosed && (!profile || profile.role !== "admin") && (
                       <Button
                         onClick={() => router.push(user ? "/my-predictions?tab=new" : "/login")}
-                        className="w-full text-[11px] h-8 font-bold bg-primary hover:bg-primary/90 text-white mt-1"
+                        className="w-full text-[11px] h-8 font-bold bg-primary hover:bg-primary/90 text-white mt-auto"
                       >
                         Tebak Skor
                       </Button>
