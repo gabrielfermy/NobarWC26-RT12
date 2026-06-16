@@ -75,9 +75,12 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 text-lg sm:text-xl font-bold tracking-tight">
-              <span className="text-primary">Nobar PilDun 2026</span>
-              <span className="text-foreground text-xs sm:text-sm font-medium opacity-80">RT 12 Pelem Kidul</span>
+            <Link href="/" className="flex items-center space-x-3 text-lg sm:text-xl font-bold tracking-tight">
+              <img src="/logo.png" alt="Logo" className="h-9 w-9 rounded-lg border border-primary/20 object-cover" />
+              <div className="flex flex-col">
+                <span className="text-primary leading-tight">Nobar PilDun 2026</span>
+                <span className="text-foreground text-[10px] sm:text-xs font-medium opacity-80 leading-tight">RT 12 Pelem Kidul</span>
+              </div>
             </Link>
           </div>
 

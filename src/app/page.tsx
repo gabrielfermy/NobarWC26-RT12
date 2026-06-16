@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Calendar, Trophy, Users, AlertCircle, ShoppingCart, UserCheck, Flame, Shield, Play, MapPin, Tv, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -430,37 +431,34 @@ export default function Home() {
     }
     setShowInvoiceModal(false);
   };
-
   const totalPredictionsCount = Object.values(predictionsCart).reduce((sum, list) => sum + list.length, 0);
   const totalPrice = totalPredictionsCount * 10000;
 
-
   return (
-    <div className="space-y-10 py-6">
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-card via-[#122218] to-card border border-primary/20 p-8 sm:p-12 text-center space-y-6">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl" />
-        
-        <div className="mx-auto inline-flex items-center space-x-2 bg-primary/10 px-4 py-1.5 rounded-full text-xs font-semibold text-primary border border-primary/20">
-          <Flame className="h-4 w-4" />
-          <span>Nonton Bareng & Tebak Skor Terbuka</span>
+    <div className="space-y-6 py-4">
+      {/* Redesigned Header: Match Orange Theme with Logo */}
+      <div className="bg-gradient-to-r from-primary to-orange-600 rounded-2xl p-6 text-white shadow-lg space-y-4 relative overflow-hidden">
+        <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-10 translate-y-[-20px]">
+          <img src="/logo.png" alt="" className="w-48 h-48" />
         </div>
-        
-        <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight max-w-4xl mx-auto">
-          Nobar PilDun 2026 <br />
-          <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            RT 12 Pelem Kidul
-          </span>
-        </h1>
-        
-        <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto">
-          Ayo tebak skor jagoanmu! Hanya <strong>Rp10.000</strong> per tebakan. Maksimal 5 tebakan per laga. Terbuka, transparan, dan seru!
-        </p>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <Flame className="h-3.5 w-3.5 animate-pulse" />
+              <span>Official Nobar Partner</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight uppercase leading-tight">
+              NOBAR RT 12 PELEM KIDUL - PIALA DUNIA 2026
+            </h1>
+            <p className="text-white/80 text-xs max-w-xl font-medium">
+              Ayo tebak skor jagoanmu! Hanya <strong>Rp10.000</strong> per tebakan. Maksimal 5 tebakan per laga. Terbuka, transparan, dan seru untuk semua warga!
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Navigation tabs for schedules */}
-      <div className="flex space-x-1.5 bg-muted p-1 rounded-xl max-w-md mx-auto">
+      {/* Tabs Menu */}
+      <div className="flex space-x-1 bg-muted p-1 rounded-xl max-w-md mx-auto">
         <Button
           variant={activeTab === "laga" ? "secondary" : "ghost"}
           className="flex-1 text-xs py-2 rounded-lg font-bold flex items-center justify-center space-x-2"
@@ -479,41 +477,129 @@ export default function Home() {
         </Button>
       </div>
 
-      {/* Grid Utama */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Grid Utama (Mobile First Stack, Desktop Grid) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Kolom Jadwal & Form Input Tebakan */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6">
           
           {activeTab === "laga" ? (
             <>
-              {/* 1. SECTION: Pertandingan Terakhir & Live */}
-              <div className="space-y-4">
+              {/* 1. UPCOMING MATCHES - Horizontal Scroll Layout */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold flex items-center space-x-2 text-foreground">
-                    <Trophy className="h-5 w-5 text-accent" />
-                    <span>Pertandingan Terakhir & Live</span>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-muted-foreground">
+                    Upcoming Matches
                   </h2>
-                  <a 
-                    href="/bracket" 
-                    className="text-xs text-primary hover:text-primary-hover font-semibold flex items-center space-x-1 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 hover:bg-primary/25 transition-all"
-                  >
-                    <span>Bagan & Klasemen Lengkap</span>
-                    <span>→</span>
-                  </a>
+                  <Link href="/bracket" className="text-xs text-primary font-bold hover:underline">
+                    Bagan & Klasemen →
+                  </Link>
                 </div>
+
+                {loading ? (
+                  <div className="flex h-32 flex-col items-center justify-center space-y-2 border border-border border-dashed rounded-xl">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <p className="text-xs text-muted-foreground">Memuat laga...</p>
+                  </div>
+                ) : upcomingMatches.length === 0 ? (
+                  <div className="text-center py-8 border border-border border-dashed rounded-xl text-muted-foreground text-xs">
+                    Semua pertandingan telah selesai!
+                  </div>
+                ) : (
+                  <div className="flex space-x-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-muted">
+                    {upcomingMatches.map((match) => {
+                      const flagA = getFlagUrl(match.team_a);
+                      const flagB = getFlagUrl(match.team_b);
+                      const stadiumCountry = getStadiumCountry(match.stadium);
+                      const stadiumFlag = getFlagUrl(stadiumCountry.name);
+                      const isBettingClosed = match.status !== "scheduled" || new Date(match.match_time).getTime() < Date.now();
+                      const formattedTime = new Date(match.match_time).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                      const formattedDate = new Date(match.match_time).toLocaleString("id-ID", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short"
+                      });
+
+                      return (
+                        <div key={match.id} className="w-[260px] shrink-0 snap-center bg-card border border-border rounded-xl p-4 space-y-3 shadow-sm flex flex-col justify-between">
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
+                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">{match.stage.split(" ")[0]}</span>
+                            <span>{formattedDate}</span>
+                          </div>
+
+                          <div className="text-center text-[10px] font-bold text-muted-foreground">
+                            World Cup Match
+                          </div>
+
+                          {/* Flag VS Flag Display */}
+                          <div className="flex items-center justify-between py-1">
+                            <div className="flex flex-col items-center space-y-1.5 w-[42%] text-center">
+                              {flagA ? (
+                                <img src={flagA} alt="" className="w-10 h-6.5 object-cover rounded shadow border border-border/20" />
+                              ) : (
+                                <Shield className="w-8 h-8 text-muted-foreground" />
+                              )}
+                              <span className="font-bold text-xs truncate max-w-full">{match.team_a}</span>
+                            </div>
+
+                            <div className="text-[10px] font-black text-muted-foreground bg-muted px-2.5 py-1 rounded">VS</div>
+
+                            <div className="flex flex-col items-center space-y-1.5 w-[42%] text-center">
+                              {flagB ? (
+                                <img src={flagB} alt="" className="w-10 h-6.5 object-cover rounded shadow border border-border/20" />
+                              ) : (
+                                <Shield className="w-8 h-8 text-muted-foreground" />
+                              )}
+                              <span className="font-bold text-xs truncate max-w-full">{match.team_b}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 text-center text-[10px] text-muted-foreground">
+                            <div>Time: {formattedTime}</div>
+                            <div className="flex items-center justify-center space-x-1 truncate max-w-full">
+                              <MapPin className="w-3 h-3 text-primary shrink-0" />
+                              <span className="truncate">{match.stadium}</span>
+                              {stadiumFlag && (
+                                <img src={stadiumFlag} alt="" className="w-3.5 h-2 object-cover rounded-xs border border-border/10 shrink-0" />
+                              )}
+                            </div>
+                          </div>
+
+                          {!isBettingClosed && (!profile || profile.role !== "admin") && (
+                            <Button
+                              onClick={() => router.push(user ? "/my-predictions?tab=new" : "/login")}
+                              className="w-full text-[11px] h-8 font-bold bg-primary hover:bg-primary/90 text-white"
+                            >
+                              Tebak Skor (Get Out Now)
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. MATCH RESULTS (Pertandingan Terakhir & Live) */}
+              <div className="space-y-3">
+                <h2 className="text-sm font-black uppercase tracking-wider text-muted-foreground">
+                  Match Results
+                </h2>
 
                 {loading ? (
                   <div className="flex h-24 flex-col items-center justify-center space-y-2 border border-border border-dashed rounded-xl">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    <p className="text-xs text-muted-foreground">Memuat hasil terakhir...</p>
+                    <p className="text-xs text-muted-foreground">Memuat hasil...</p>
                   </div>
                 ) : recentMatches.length === 0 ? (
                   <div className="text-center py-8 border border-border border-dashed rounded-xl text-muted-foreground text-xs">
-                    Belum ada pertandingan yang berlangsung atau selesai.
+                    Belum ada hasil pertandingan.
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {recentMatches.map((match) => {
                       const flagA = getFlagUrl(match.team_a);
                       const flagB = getFlagUrl(match.team_b);
@@ -528,50 +614,39 @@ export default function Home() {
                       }).replace(/\./g, ':');
 
                       return (
-                        <div key={match.id} className="rounded-xl border border-border/80 bg-card/60 p-4 space-y-3 shadow-sm hover:border-accent/30 transition-all backdrop-blur-sm">
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="bg-accent/20 px-2 py-0.5 rounded text-accent font-medium uppercase tracking-wider">
+                        <div key={match.id} className="rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold">
+                            <span className="bg-muted px-2 py-0.5 rounded text-[9px] uppercase tracking-wider">
                               {match.stage}
                             </span>
-                            <span className="text-muted-foreground font-medium">{formattedDate}</span>
+                            <span>{formattedDate}</span>
                           </div>
 
                           <div className="flex items-center justify-between py-1">
-                            {/* Team A */}
-                            <div className="flex items-center space-x-3 w-[42%]">
+                            <div className="flex items-center space-x-3 w-[40%]">
                               {flagA ? (
-                                <img src={flagA} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/40 shrink-0" />
+                                <img src={flagA} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/20 shrink-0" />
                               ) : (
                                 <Shield className="w-5 h-5 text-muted-foreground shrink-0" />
                               )}
-                              <span className="font-semibold text-xs sm:text-sm truncate">{match.team_a}</span>
+                              <span className="font-bold text-xs sm:text-sm truncate">{match.team_a}</span>
                             </div>
 
-                            {/* Skor Tengah / VS */}
                             <div className="flex flex-col items-center justify-center px-3">
-                              <div className="flex items-center space-x-2 bg-accent/10 px-3 py-1 rounded border border-accent/20">
-                                <span className="font-mono text-sm font-black text-accent">{match.score_a}</span>
+                              <div className="flex items-center space-x-2 bg-primary/10 px-3 py-1 rounded border border-primary/20">
+                                <span className="font-mono text-sm font-black text-primary">{match.score_a}</span>
                                 <span className="text-muted-foreground/50 text-[10px]">-</span>
-                                <span className="font-mono text-sm font-black text-accent">{match.score_b}</span>
+                                <span className="font-mono text-sm font-black text-primary">{match.score_b}</span>
                               </div>
-                              {match.status !== "completed" && (
-                                <span className="text-[8px] text-green-500 font-bold uppercase mt-1 tracking-wider animate-pulse flex items-center">
-                                  <Play className="w-2 h-2 fill-green-500 mr-0.5" />
-                                  {match.status.replace("_", " ")}
-                                </span>
-                              )}
-                              {match.status === "completed" && (
-                                <span className="text-[8px] text-muted-foreground font-bold uppercase mt-1 tracking-wider">
-                                  Selesai
-                                </span>
-                              )}
+                              <span className="text-[8px] text-muted-foreground font-bold uppercase mt-1 tracking-wider">
+                                {match.status === "completed" ? "Selesai" : match.status.replace("_", " ")}
+                              </span>
                             </div>
 
-                            {/* Team B */}
-                            <div className="flex items-center justify-end space-x-3 w-[42%] text-right">
-                              <span className="font-semibold text-xs sm:text-sm truncate">{match.team_b}</span>
+                            <div className="flex items-center justify-end space-x-3 w-[40%] text-right">
+                              <span className="font-bold text-xs sm:text-sm truncate">{match.team_b}</span>
                               {flagB ? (
-                                <img src={flagB} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/40 shrink-0" />
+                                <img src={flagB} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/20 shrink-0" />
                               ) : (
                                 <Shield className="w-5 h-5 text-muted-foreground shrink-0" />
                               )}
@@ -579,101 +654,6 @@ export default function Home() {
                           </div>
 
                           <div className="text-[10px] text-muted-foreground flex items-center justify-between border-t border-border/30 pt-2">
-                            <div className="flex items-center max-w-[80%]">
-                              <MapPin className="h-3 w-3 mr-1 text-accent shrink-0" />
-                              <span className="truncate mr-1.5">{match.stadium}</span>
-                              {stadiumCountry && (
-                                <span className="inline-flex items-center space-x-1 bg-muted px-1.5 py-0.5 rounded text-[8px] font-bold shrink-0">
-                                  {stadiumFlag && (
-                                    <img src={stadiumFlag} alt="" className="w-4 h-2.5 object-cover rounded-xs border border-border/20" />
-                                  )}
-                                  <span>{stadiumCountry.name}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* 2. SECTION: Jadwal Laga Terdekat (Akan Datang) */}
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold flex items-center space-x-2 text-foreground">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <span>Jadwal Laga Terdekat</span>
-                </h2>
-
-                {loading ? (
-                  <div className="flex h-32 flex-col items-center justify-center space-y-2 border border-border border-dashed rounded-xl">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    <p className="text-xs text-muted-foreground">Memuat jadwal terdekat...</p>
-                  </div>
-                ) : upcomingMatches.length === 0 ? (
-                  <div className="text-center py-12 border border-border border-dashed rounded-xl text-muted-foreground">
-                    Tidak ada pertandingan mendatang yang belum dimainkan. Semua pertandingan telah selesai!
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingMatches.map((match) => {
-                      const flagA = getFlagUrl(match.team_a);
-                      const flagB = getFlagUrl(match.team_b);
-                      const stadiumCountry = getStadiumCountry(match.stadium);
-                      const stadiumFlag = getFlagUrl(stadiumCountry.name);
-
-                      // Aturan Penutupan Tebakan: Pertandingan sudah mulai (status bukan 'scheduled') atau waktu tanding terlewati
-                      const isBettingClosed = match.status !== "scheduled" || new Date(match.match_time).getTime() < Date.now();
-
-                      const formattedDate = new Date(match.match_time).toLocaleString("id-ID", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }).replace(/\./g, ':');
-
-                      return (
-                        <div key={match.id} className="rounded-xl border border-border bg-card p-5 space-y-4 shadow-sm hover:border-primary/20 transition-all">
-                          {/* Header Card Laga */}
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="bg-secondary/20 px-2 py-0.5 rounded text-secondary font-medium text-[10px]">
-                              {match.stage}
-                            </span>
-                            <span className="text-muted-foreground font-medium">{formattedDate}</span>
-                          </div>
-
-                          {/* Bendera & Nama Tim */}
-                          <div className="flex items-center justify-between py-2">
-                            {/* Team A */}
-                            <div className="flex items-center space-x-3 w-[42%]">
-                              {flagA ? (
-                                <img src={flagA} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/40 shrink-0" />
-                              ) : (
-                                <Shield className="w-5 h-5 text-muted-foreground shrink-0" />
-                              )}
-                              <span className="font-semibold text-xs sm:text-sm truncate">{match.team_a}</span>
-                            </div>
-
-                            {/* Skor Tengah / VS */}
-                            <div className="flex flex-col items-center justify-center px-3">
-                              <div className="text-[10px] font-bold text-muted-foreground bg-muted px-3 py-1 rounded">VS</div>
-                            </div>
-
-                            {/* Team B */}
-                            <div className="flex items-center justify-end space-x-3 w-[42%] text-right">
-                              <span className="font-semibold text-xs sm:text-sm truncate">{match.team_b}</span>
-                              {flagB ? (
-                                <img src={flagB} alt="" className="w-7 h-4.5 object-cover rounded shadow-sm border border-border/40 shrink-0" />
-                              ) : (
-                                <Shield className="w-5 h-5 text-muted-foreground shrink-0" />
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Informasi Stadion */}
-                          <div className="text-[10px] text-muted-foreground flex items-center justify-between border-t border-border/30 pt-3">
                             <div className="flex items-center max-w-[80%]">
                               <MapPin className="h-3 w-3 mr-1 text-primary shrink-0" />
                               <span className="truncate mr-1.5">{match.stadium}</span>
@@ -687,20 +667,6 @@ export default function Home() {
                               )}
                             </div>
                           </div>
-
-                          {/* Tombol Aksi Tebak Skor Arahkan ke Dashboard */}
-                          {!isBettingClosed && (!profile || profile.role !== "admin") && (
-                            <div className="flex justify-end items-center pt-3 border-t border-border/30">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                                onClick={() => router.push(user ? "/my-predictions?tab=new" : "/login")}
-                              >
-                                + Tebak Skor (Rp10.000)
-                              </Button>
-                            </div>
-                          )}
                         </div>
                       );
                     })}
@@ -709,13 +675,14 @@ export default function Home() {
               </div>
             </>
           ) : (
-            <div className="space-y-6">
+            /* Tab Jadwal Nobar */
+            <div className="space-y-4">
               <div className="border-b border-border pb-3">
-                <h2 className="text-xl font-bold flex items-center space-x-2 text-foreground">
+                <h2 className="text-lg font-bold flex items-center space-x-2 text-foreground">
                   <Tv className="h-5 w-5 text-primary" />
                   <span>Jadwal Nonton Bareng (Nobar) RT 12</span>
                 </h2>
-                <p className="text-xs text-muted-foreground mt-1">Saksikan pertandingan babak gugur seru bersama warga RT 12 Pelem Kidul di Pos Ronda.</p>
+                <p className="text-xs text-muted-foreground mt-1">Saksikan keseruan bersama warga RT 12 Pelem Kidul di Pos Ronda.</p>
               </div>
 
               {loading ? (
@@ -724,7 +691,7 @@ export default function Home() {
                   <p className="text-xs text-muted-foreground">Memuat jadwal nobar...</p>
                 </div>
               ) : matches.filter(m => m.is_nobar).length === 0 ? (
-                <div className="text-center py-12 border border-border border-dashed rounded-xl text-muted-foreground text-xs">
+                <div className="text-center py-8 border border-border border-dashed rounded-xl text-muted-foreground text-xs">
                   Belum ada jadwal Nonton Bareng yang diumumkan oleh admin.
                 </div>
               ) : (
@@ -741,9 +708,9 @@ export default function Home() {
                     }).replace(/\./g, ':');
 
                     return (
-                      <div key={match.id} className="rounded-xl border border-primary/20 bg-card p-5 space-y-4 shadow-sm hover:border-primary/45 transition-all">
+                      <div key={match.id} className="rounded-xl border border-primary/20 bg-card p-4 space-y-4 shadow-sm">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="bg-primary/20 px-2 py-0.5 rounded text-primary font-bold text-[9px] uppercase tracking-wider">
+                          <span className="bg-primary/15 px-2 py-0.5 rounded text-primary font-bold text-[9px] uppercase tracking-wider">
                             {match.stage}
                           </span>
                           <span className="text-muted-foreground font-medium">{formattedDate} WIB</span>
@@ -758,15 +725,7 @@ export default function Home() {
                             )}
                             <span className="font-bold text-xs sm:text-sm truncate">{match.team_a}</span>
                           </div>
-                          {match.status === "completed" ? (
-                            <div className="flex items-center space-x-1.5 bg-muted px-2.5 py-0.5 rounded font-mono text-xs font-black">
-                              <span>{match.score_a}</span>
-                              <span>-</span>
-                              <span>{match.score_b}</span>
-                            </div>
-                          ) : (
-                            <div className="font-mono text-xs font-black text-muted-foreground bg-muted px-2 py-0.5 rounded">VS</div>
-                          )}
+                          <div className="font-mono text-xs font-black bg-muted px-2.5 py-0.5 rounded text-muted-foreground">VS</div>
                           <div className="flex items-center justify-end space-x-2.5 w-[42%] text-right">
                             <span className="font-bold text-xs sm:text-sm truncate">{match.team_b}</span>
                             {flagB ? (
@@ -777,34 +736,12 @@ export default function Home() {
                           </div>
                         </div>
 
-                        <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 flex flex-col sm:flex-row justify-between gap-3 text-left">
-                          <div className="flex items-start space-x-2">
+                        <div className="bg-primary/5 p-3 rounded-lg border border-primary/10 flex items-start space-x-2">
                             <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                             <div className="space-y-0.5">
                               <span className="text-[9px] text-primary font-black uppercase tracking-wider block">Lokasi Nobar:</span>
                               <span className="text-xs font-bold text-foreground">{match.nobar_location || "Pos Ronda RT 12"}</span>
                             </div>
-                          </div>
-                          
-                          {(() => {
-                            const preMins = match.nobar_pre_minutes || 30;
-                            const gatheringTime = new Date(new Date(match.match_time).getTime() - preMins * 60000);
-                            const formattedGatheringTime = gatheringTime.toLocaleString("id-ID", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }).replace(/\./g, ':');
-                            return (
-                              <div className="flex items-start space-x-2">
-                                <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                                <div className="space-y-0.5">
-                                  <span className="text-[9px] text-primary font-black uppercase tracking-wider block">Acara Mulai (Pre-match):</span>
-                                  <span className="text-xs font-bold text-foreground">
-                                    Pukul {formattedGatheringTime} WIB ({preMins} menit sebelum Kick-off)
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })()}
                         </div>
                       </div>
                     );
@@ -815,38 +752,74 @@ export default function Home() {
           )}
         </div>
 
-        {/* Kolom Papan Transaksi & Tebakan Publik */}
-        <div className="space-y-8">
-          {/* Transparansi Tebakan Terkini */}
-          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <h3 className="text-lg font-bold flex items-center space-x-2 border-b border-border pb-3">
-              <Users className="h-5 w-5 text-primary" />
-              <span>Tebakan Terbuka (Paid)</span>
-            </h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-              {publicPredictions.length === 0 ? (
-                <div className="text-center py-8 text-xs text-muted-foreground">
-                  Belum ada tebakan aktif dari warga saat ini.
-                </div>
-              ) : (
-                publicPredictions.map((p) => (
-                  <div key={p.id} className="flex justify-between items-center text-xs p-2.5 rounded bg-background/50 border border-border/30">
-                    <div>
-                      <div className="font-semibold text-foreground">{p.name}</div>
-                      <div className="text-muted-foreground text-[10px]">{p.match}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono font-bold text-accent">{p.score}</div>
-                      <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase">
-                        {p.method}
-                      </span>
-                    </div>
+        {/* Community Wall Section (Replacing raw transaction lists to match image 2) */}
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-4 shadow-sm">
+            <div className="border-b border-border pb-3">
+              <h3 className="text-sm font-black uppercase tracking-wider text-muted-foreground">
+                Community Wall
+              </h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Dengarkan serunya suara warga RT 12 Pelem Kidul.</p>
+            </div>
+
+            {/* List of comments/wishes (simulating a live community wall) */}
+            <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
+              <div className="bg-background/50 border border-border/30 p-3 rounded-lg space-y-2">
+                <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px] text-primary">D</div>
+                    <span className="font-bold text-foreground">dandonia</span>
+                    <span className="text-[9px] text-muted-foreground">• 8h ago</span>
                   </div>
-                ))
-              )}
+                </div>
+                <p className="text-xs font-medium text-foreground/90 pl-8">
+                  Great start, Indonesia!
+                </p>
+              </div>
+
+              <div className="bg-background/50 border border-border/30 p-3 rounded-lg space-y-2">
+                <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px] text-primary">K</div>
+                    <span className="font-bold text-foreground">dakh</span>
+                    <span className="text-[9px] text-muted-foreground">• 5h ago</span>
+                  </div>
+                </div>
+                <p className="text-xs font-medium text-foreground/90 pl-8">
+                  Hayo, are ready at RT 12!
+                </p>
+              </div>
+
+              <div className="bg-background/50 border border-border/30 p-3 rounded-lg space-y-2">
+                <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center font-bold text-[10px] text-accent">A</div>
+                    <span className="font-bold text-foreground">Admin RT 12</span>
+                    <span className="text-[9px] text-muted-foreground">• 1h ago</span>
+                  </div>
+                </div>
+                <p className="text-xs font-medium text-foreground/90 pl-8">
+                  Jangan lupa nanti malam kumpul di pos ronda jam 19.30 WIB ya lur!
+                </p>
+              </div>
+            </div>
+
+            {/* Input Comment box */}
+            <div className="border-t border-border pt-4">
+              <div className="flex space-x-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Add a comment..."
+                  className="flex-1 px-3 py-2 bg-background border border-input rounded-lg text-xs placeholder-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                />
+                <Button size="sm" className="h-8 text-[11px] font-bold bg-primary text-white">
+                  Post
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Modal / Dialog Invoice Simulasi */}
