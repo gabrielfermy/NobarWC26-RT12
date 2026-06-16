@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Trophy, Users, MapPin, Calendar, AlertCircle, Shield } from "lucide-react";
+import { Trophy, Users, Calendar, AlertCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Kamus Kode Negara ISO2 untuk Bendera (FlagCDN)
@@ -162,7 +162,7 @@ export default function BracketPage() {
           console.log("Real-time update received:", payload);
           setMatches((prevMatches) => {
             const updated = [...prevMatches];
-            const index = updated.findIndex((m) => m.id === payload.new.id);
+            const index = updated.findIndex((m) => m.id === (payload.new as any).id);
             if (index !== -1) {
               updated[index] = payload.new as Match;
             } else if (payload.eventType === "INSERT") {
@@ -405,127 +405,118 @@ export default function BracketPage() {
         </div>
       )}
 
-      {/* --- TAB BAGAN FASE GUGUR (TREE CONNECTED VIEW) --- */}
+      {/* --- TAB BAGAN FASE GUGUR (TREE CONNECTED VIEW WITH FIXED SLOT HEIGHTS) --- */}
       {activeTab === "knockout" && (
         <div className="relative overflow-x-auto pb-8 pt-4">
           {/* Kontainer Utama Bracket dengan grid kolom untuk 5 Babak */}
-          <div className="flex gap-16 min-w-[1400px] px-4 select-none relative">
+          <div className="flex gap-16 min-w-[1400px] px-4 select-none relative h-[1700px] items-end">
             
-            {/* 1. Babak 32 Besar (16 Cards) */}
-            <div className="flex flex-col justify-between w-[240px] shrink-0 py-2 space-y-4">
+            {/* 1. Babak 32 Besar (16 slots of 100px) */}
+            <div className="flex flex-col justify-end w-[240px] shrink-0 h-[1600px]">
               <h3 className="text-center font-bold text-xs uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2 mb-2">Round of 32</h3>
-              {stages.r32.length === 0 ? (
-                <p className="text-center text-xs text-muted-foreground py-8">Belum ada jadwal</p>
-              ) : (
-                stages.r32.map((match, idx) => (
-                  <div key={match.id} className="relative flex items-center h-[90px]">
-                    <MatchCard match={match} />
+              {Array.from({ length: 16 }).map((_, idx) => {
+                const match = stages.r32[idx];
+                return (
+                  <div key={idx} className="relative flex items-center justify-center h-[96px] w-full">
+                    {match ? <MatchCard match={match} /> : <EmptyPlaceholderCard text="Babak 32 Besar" />}
                     {/* Garis konektor ke kanan */}
-                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-border/80" />
-                    {/* Garis vertikal penghubung pasangan laga */}
+                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-zinc-600" />
+                    {/* Garis vertikal */}
                     {idx % 2 === 0 ? (
-                      <div className="absolute right-[-32px] w-[2px] h-[55px] translate-y-[27px] bg-border/80" />
-                    ) : (
-                      <div className="absolute right-[-32px] w-[2px] h-[55px] translate-y-[-27px] bg-border/80" />
-                    )}
+                      <div className="absolute right-[-32px] w-[2px] h-[96px] top-[48px] bg-zinc-600" />
+                    ) : null}
                   </div>
-                ))
-              )}
+                );
+              })}
             </div>
 
-            {/* 2. Babak 16 Besar (8 Cards - Jarak Double) */}
-            <div className="flex flex-col justify-around w-[240px] shrink-0 py-2">
+            {/* 2. Babak 16 Besar (8 slots of 200px) */}
+            <div className="flex flex-col justify-end w-[240px] shrink-0 h-[1600px]">
               <h3 className="text-center font-bold text-xs uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2 mb-2">Round of 16</h3>
-              {stages.r16.length === 0 ? (
-                Array.from({ length: 8 }).map((_, idx) => <EmptyPlaceholderCard key={idx} text="Round of 16" />)
-              ) : (
-                stages.r16.map((match, idx) => (
-                  <div key={match.id} className="relative flex items-center h-[90px] my-[10px]">
+              {Array.from({ length: 8 }).map((_, idx) => {
+                const match = stages.r16[idx];
+                return (
+                  <div key={idx} className="relative flex items-center justify-center h-[192px] w-full">
                     {/* Garis input kiri */}
-                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-border/80" />
-                    <MatchCard match={match} />
+                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-zinc-600" />
+                    {match ? <MatchCard match={match} /> : <EmptyPlaceholderCard text="Babak 16 Besar" />}
                     {/* Garis konektor ke kanan */}
-                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-border/80" />
+                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-zinc-600" />
                     {/* Garis vertikal */}
                     {idx % 2 === 0 ? (
-                      <div className="absolute right-[-32px] w-[2px] h-[105px] translate-y-[52px] bg-border/80" />
-                    ) : (
-                      <div className="absolute right-[-32px] w-[2px] h-[105px] translate-y-[-52px] bg-border/80" />
-                    )}
+                      <div className="absolute right-[-32px] w-[2px] h-[192px] top-[96px] bg-zinc-600" />
+                    ) : null}
                   </div>
-                ))
-              )}
+                );
+              })}
             </div>
 
-            {/* 3. Perempat Final (4 Cards) */}
-            <div className="flex flex-col justify-around w-[240px] shrink-0 py-2">
+            {/* 3. Perempat Final (4 slots of 400px) */}
+            <div className="flex flex-col justify-end w-[240px] shrink-0 h-[1600px]">
               <h3 className="text-center font-bold text-xs uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2 mb-2">Quarter-finals</h3>
-              {stages.qf.length === 0 ? (
-                Array.from({ length: 4 }).map((_, idx) => <EmptyPlaceholderCard key={idx} text="Quarter-final" />)
-              ) : (
-                stages.qf.map((match, idx) => (
-                  <div key={match.id} className="relative flex items-center h-[90px] my-[30px]">
+              {Array.from({ length: 4 }).map((_, idx) => {
+                const match = stages.qf[idx];
+                return (
+                  <div key={idx} className="relative flex items-center justify-center h-[384px] w-full">
                     {/* Garis input kiri */}
-                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-border/80" />
-                    <MatchCard match={match} />
+                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-zinc-600" />
+                    {match ? <MatchCard match={match} /> : <EmptyPlaceholderCard text="Perempat Final" />}
                     {/* Garis konektor ke kanan */}
-                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-border/80" />
+                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-zinc-600" />
                     {/* Garis vertikal */}
                     {idx % 2 === 0 ? (
-                      <div className="absolute right-[-32px] w-[2px] h-[215px] translate-y-[107px] bg-border/80" />
-                    ) : (
-                      <div className="absolute right-[-32px] w-[2px] h-[215px] translate-y-[-107px] bg-border/80" />
-                    )}
+                      <div className="absolute right-[-32px] w-[2px] h-[384px] top-[192px] bg-zinc-600" />
+                    ) : null}
                   </div>
-                ))
-              )}
+                );
+              })}
             </div>
 
-            {/* 4. Semifinal (2 Cards) */}
-            <div className="flex flex-col justify-around w-[240px] shrink-0 py-2">
+            {/* 4. Semifinal (2 slots of 800px) */}
+            <div className="flex flex-col justify-end w-[240px] shrink-0 h-[1600px]">
               <h3 className="text-center font-bold text-xs uppercase tracking-widest text-muted-foreground border-b border-border/40 pb-2 mb-2">Semifinals</h3>
-              {stages.sf.length === 0 ? (
-                Array.from({ length: 2 }).map((_, idx) => <EmptyPlaceholderCard key={idx} text="Semifinal" />)
-              ) : (
-                stages.sf.map((match, idx) => (
-                  <div key={match.id} className="relative flex items-center h-[90px] my-[80px]">
+              {Array.from({ length: 2 }).map((_, idx) => {
+                const match = stages.sf[idx];
+                return (
+                  <div key={idx} className="relative flex items-center justify-center h-[768px] w-full">
                     {/* Garis input kiri */}
-                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-border/80" />
-                    <MatchCard match={match} />
+                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-zinc-600" />
+                    {match ? <MatchCard match={match} /> : <EmptyPlaceholderCard text="Semifinal" />}
                     {/* Garis konektor ke kanan */}
-                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-border/80" />
+                    <div className="absolute right-[-32px] w-[32px] h-[2px] bg-zinc-600" />
                     {/* Garis vertikal */}
                     {idx % 2 === 0 ? (
-                      <div className="absolute right-[-32px] w-[2px] h-[435px] translate-y-[217px] bg-border/80" />
-                    ) : (
-                      <div className="absolute right-[-32px] w-[2px] h-[435px] translate-y-[-217px] bg-border/80" />
-                    )}
+                      <div className="absolute right-[-32px] w-[2px] h-[768px] top-[384px] bg-zinc-600" />
+                    ) : null}
                   </div>
-                ))
-              )}
+                );
+              })}
             </div>
 
-            {/* 5. Final (1 Card - Centered) */}
-            <div className="flex flex-col justify-center w-[240px] shrink-0 py-2 relative">
+            {/* 5. Final (1 slot of 1600px) */}
+            <div className="flex flex-col justify-end w-[240px] shrink-0 h-[1600px] relative">
               <h3 className="text-center font-bold text-xs uppercase tracking-widest text-primary border-b border-primary/40 pb-2 mb-2 absolute top-2 left-0 right-0">Final</h3>
-              {stages.final.length === 0 ? (
-                <EmptyPlaceholderCard text="Final Match" />
-              ) : (
-                stages.final.map((match) => (
-                  <div key={match.id} className="relative flex items-center h-[90px]">
+              {(() => {
+                const match = stages.final[0];
+                return (
+                  <div className="relative flex items-center justify-center h-[1536px] w-full">
                     {/* Garis input kiri */}
-                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-border/80" />
-                    <div className="w-full relative">
-                      <MatchCard match={match} highlight />
-                      {match.status === "completed" && (
-                        <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 text-center bg-primary/20 text-primary border border-primary/30 px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase animate-bounce w-[180px]">
-                          🏆 JUARA: {match.score_a! > match.score_b! ? match.team_a : match.team_b}
-                        </div>
-                      )}
-                    </div>
+                    <div className="absolute left-[-32px] w-[32px] h-[2px] bg-zinc-600" />
+                    {match ? (
+                      <div className="w-full relative">
+                        <MatchCard match={match} highlight />
+                        {match.status === "completed" && (
+                          <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 text-center bg-primary/20 text-primary border border-primary/30 px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase animate-bounce w-[180px]">
+                            🏆 JUARA: {match.score_a! > match.score_b! ? match.team_a : match.team_b}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <EmptyPlaceholderCard text="Final Match" />
+                    )}
                   </div>
-                ))
-              )}
+                );
+              })()}
             </div>
 
           </div>

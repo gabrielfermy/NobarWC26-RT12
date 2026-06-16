@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 // Kamus terjemahan nama negara/tim ke Bahasa Indonesia yang komprehensif
 const teamTranslations: Record<string, string> = {
@@ -94,26 +93,33 @@ const translateTeam = (name: string): string => {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Otorisasi token rahasia
+    // 1. Dapatkan Bearer token dari request
     const authHeader = request.headers.get('Authorization');
-    const secretKey = process.env.SYNC_SECRET_KEY;
-
-    if (!secretKey) {
-      return NextResponse.json(
-        { error: 'Server configuration error: SYNC_SECRET_KEY is not set' },
-        { status: 500 }
-      );
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Missing token' }, { status: 401 });
     }
 
-    if (!authHeader || authHeader !== `Bearer ${secretKey}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized: Invalid sync token' },
-        { status: 401 }
-      );
+    const token = authHeader.split(' ')[1];
+
+    // 2. Dapatkan identitas user dari Supabase Auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // 2. Fetch data dari ESPN API Scoreboard (dates range 2026-06-11 s/d 2026-07-19)
-    console.log('Fetching World Cup data from ESPN API...');
+    // 3. Verifikasi role admin
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (profileError || profile?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
+    // 4. Fetch data dari ESPN API Scoreboard (dates range 2026-06-11 s/d 2026-07-19)
+    console.log('Fetching World Cup data from ESPN API via trigger sync...');
     const url = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=200&dates=20260611-20260719';
     const response = await fetch(url, { cache: 'no-store' });
 
@@ -127,7 +133,7 @@ export async function POST(request: NextRequest) {
     const rawData = await response.json();
     const rawEvents = rawData.events || [];
 
-    // Ambil data pertandingan yang sudah ada di database untuk mempertahankan is_nobar & nobar_location
+    // Ambil data pertandingan yang sudah ada di database untuk mempertahankan nobar fields
     const { data: existingMatches } = await supabaseAdmin
       .from('matches')
       .select('id, is_nobar, nobar_location, nobar_pre_minutes');
@@ -141,7 +147,7 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    // 3. Transformasi data dari ESPN
+    // 5. Transformasi data dari ESPN
     const formattedMatches = rawEvents.map((event: any) => {
       const competition = event.competitions?.[0];
       if (!competition) return null;
@@ -208,31 +214,22 @@ export async function POST(request: NextRequest) {
       };
     }).filter(Boolean);
 
-    // 4. Upsert hasil pemetaan ke database Supabase
-    console.log(`Upserting ${formattedMatches.length} matches from ESPN to Supabase...`);
+    // 6. Upsert ke database Supabase
     const { data, error } = await supabaseAdmin
       .from('matches')
       .upsert(formattedMatches, { onConflict: 'id' })
       .select();
 
-    if (error) {
-      console.error('Database sync upsert error:', error);
-      return NextResponse.json(
-        { error: 'Database upsert failed', details: error.message },
-        { status: 500 }
-      );
-    }
+    if (error) throw error;
 
     return NextResponse.json({
       success: true,
-      message: 'Matches successfully synced from ESPN API',
+      message: 'Matches successfully synced from ESPN API via trigger',
       count: data?.length || 0
     });
+
   } catch (err: any) {
-    console.error('Error syncing matches:', err);
-    return NextResponse.json(
-      { error: 'Internal server error', details: err.message },
-      { status: 500 }
-    );
+    console.error('Trigger sync error:', err);
+    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
   }
 }
