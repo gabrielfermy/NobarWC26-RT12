@@ -346,7 +346,7 @@ export default function Home() {
       alert("Pesan tidak boleh kosong!");
       return;
     }
-    if (captchaInput.toUpperCase() !== captchaCode) {
+    if (!user && captchaInput.toUpperCase() !== captchaCode) {
       alert("Kode CAPTCHA tidak cocok!");
       generateCaptcha();
       return;
@@ -907,28 +907,30 @@ export default function Home() {
 
             {/* Input Comment box & Captcha */}
             <div className="border-t border-border pt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-2">
+              <div className={user ? "w-full" : "grid grid-cols-2 gap-2"}>
                 <input
                   type="text"
                   placeholder="Nama Anda..."
                   value={newCommentName}
                   onChange={(e) => setNewCommentName(e.target.value)}
                   disabled={!!profile?.name}
-                  className="px-3 py-2 bg-background border border-input rounded-lg text-xs placeholder-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary text-foreground disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-background border border-input rounded-lg text-xs placeholder-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary text-foreground disabled:opacity-70 disabled:cursor-not-allowed"
                 />
-                <div className="flex items-center space-x-1">
-                  <div className="bg-muted px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold tracking-widest text-primary border border-border select-none flex items-center justify-center flex-1 h-8">
-                    {captchaCode}
+                {!user && (
+                  <div className="flex items-center space-x-1">
+                    <div className="bg-muted px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold tracking-widest text-primary border border-border select-none flex items-center justify-center flex-1 h-8">
+                      {captchaCode}
+                    </div>
+                    <input
+                      type="text"
+                      maxLength={4}
+                      placeholder="CAPTCHA"
+                      value={captchaInput}
+                      onChange={(e) => setCaptchaInput(e.target.value)}
+                      className="w-16 px-2 py-1.5 bg-background border border-input rounded-lg text-xs text-center uppercase placeholder-muted-foreground/45 focus:outline-none focus:ring-1 focus:ring-primary text-foreground h-8"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    maxLength={4}
-                    placeholder="CAPTCHA"
-                    value={captchaInput}
-                    onChange={(e) => setCaptchaInput(e.target.value)}
-                    className="w-16 px-2 py-1.5 bg-background border border-input rounded-lg text-xs text-center uppercase placeholder-muted-foreground/45 focus:outline-none focus:ring-1 focus:ring-primary text-foreground h-8"
-                  />
-                </div>
+                )}
               </div>
               <div className="flex space-x-2 items-center">
                 <textarea
