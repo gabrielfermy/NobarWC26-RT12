@@ -64,10 +64,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Update status transaksi di database (bypass RLS dengan supabaseAdmin)
+    // Ekstrak UUID transaksi asli dari order_id (menghapus suffix timestamp jika ada)
+    const transactionId = order_id.includes("-") && order_id.length > 36
+      ? order_id.substring(0, 36)
+      : order_id;
+
     const { error: updateErr } = await supabaseAdmin
       .from("transactions")
       .update({ payment_status: appStatus })
-      .eq("id", order_id);
+      .eq("id", transactionId);
 
     if (updateErr) {
       console.error("Database Update Failed:", updateErr);
