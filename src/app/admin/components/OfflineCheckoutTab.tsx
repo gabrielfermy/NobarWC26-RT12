@@ -31,6 +31,7 @@ export default function OfflineCheckoutTab({
   const [predScoreA, setPredScoreA] = useState("0");
   const [predScoreB, setPredScoreB] = useState("0");
   const [offlinePredictions, setOfflinePredictions] = useState<any[]>([]);
+  const [matchFilterQuery, setMatchFilterQuery] = useState("");
 
   const selectedMatch = matches.find((m) => m.id === selectedMatchId);
 
@@ -290,10 +291,19 @@ export default function OfflineCheckoutTab({
           <h4 className="font-bold text-sm">Pilih & Masukkan Skor Tebakan</h4>
           <div className="space-y-4">
             {/* Pilih Pertandingan */}
-            <div>
-              <label className="text-[10px] font-semibold text-muted-foreground block mb-1">
-                Pertandingan
-              </label>
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <label className="text-[10px] font-semibold text-muted-foreground block">
+                  Pertandingan
+                </label>
+                <input
+                  type="text"
+                  placeholder="Cari negara (misal: Portugal, Irak)..."
+                  value={matchFilterQuery}
+                  onChange={(e) => setMatchFilterQuery(e.target.value)}
+                  className="block w-full sm:w-64 px-2.5 py-1 bg-background border border-input rounded text-[10px] placeholder-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                />
+              </div>
               <select
                 value={selectedMatchId}
                 onChange={(e) => setSelectedMatchId(e.target.value)}
@@ -302,6 +312,15 @@ export default function OfflineCheckoutTab({
                 <option value="">-- Pilih Pertandingan --</option>
                 {matches
                   .filter((m) => m.status === "scheduled")
+                  .filter((m) => {
+                    const q = matchFilterQuery.toLowerCase().trim();
+                    return (
+                      !q ||
+                      m.team_a.toLowerCase().includes(q) ||
+                      m.team_b.toLowerCase().includes(q) ||
+                      m.stage.toLowerCase().includes(q)
+                    );
+                  })
                   .map((m) => {
                     const formattedDate = new Date(m.match_time)
                       .toLocaleString("id-ID", {
