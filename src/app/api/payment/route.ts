@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     // 2. Buat Payload Midtrans
     const payload = {
       transaction_details: {
-        order_id: transaction.id, // UUID transaksi digunakan sebagai order_id unik di Midtrans
+        order_id: `${transaction.id}-${Date.now().toString(36)}`, // Gunakan suffix base-36 timestamp agar aman di bawah batas 50 karakter Midtrans
         gross_amount: transaction.amount,
       },
       customer_details: {
@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       console.error("Midtrans API Error:", result);
-      return NextResponse.json({ error: "Failed to create payment session from Midtrans" }, { status: 500 });
+      const detailError = result.error_messages ? result.error_messages.join(", ") : JSON.stringify(result);
+      return NextResponse.json({ error: `Failed to create payment session from Midtrans: ${detailError}` }, { status: 500 });
     }
 
     // 4. Update transaksi dengan reference token Midtrans jika diinginkan
