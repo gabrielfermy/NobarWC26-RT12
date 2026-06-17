@@ -1,0 +1,715 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Match, Profile } from "../types";
+
+interface OfflineCheckoutTabProps {
+  matches: Match[];
+  users: Profile[];
+  supabase: any;
+  setLoading: (val: boolean) => void;
+  setReceiptData: (val: { transaction: any; predictions: any[] } | null) => void;
+  loadAllData: () => Promise<void>;
+  getFlagUrl?: (teamName: string) => string | null;
+}
+
+const countryCodes: Record<string, string> = {
+  "Meksiko": "mx", "Mexico": "mx",
+  "Amerika Serikat": "us", "United States": "us",
+  "Kanada": "ca", "Canada": "ca",
+  "Afrika Selatan": "za", "South Africa": "za",
+  "Korea Selatan": "kr", "South Korea": "kr",
+  "Republik Ceko": "cz", "Czech Republic": "cz",
+  "Bosnia & Herzegovina": "ba", "Bosnia and Herzegovina": "ba",
+  "Arab Saudi": "sa", "Saudi Arabia": "sa",
+  "Prancis": "fr", "France": "fr",
+  "Australia": "au",
+  "Brasil": "br", "Brazil": "br",
+  "Kamerun": "cm", "Cameroon": "cm",
+  "Jerman": "de", "Germany": "de",
+  "Jepang": "jp", "Japan": "jp",
+  "Spanyol": "es", "Spain": "es",
+  "Kosta Rika": "cr", "Costa Rica": "cr",
+  "Inggris": "gb", "England": "gb",
+  "Iran": "ir",
+  "Argentina": "ar",
+  "Belanda": "nl", "Netherlands": "nl",
+  "Italia": "it", "Italy": "it",
+  "Belgia": "be", "Belgium": "be",
+  "Kroasia": "hr", "Croatia": "hr",
+  "Portugal": "pt",
+  "Uruguay": "uy",
+  "Kolombia": "co", "Colombia": "co",
+  "Maroko": "ma", "Morocco": "ma",
+  "Swiss": "ch", "Switzerland": "ch",
+  "Polandia": "pl", "Poland": "pl",
+  "Senegal": "sn",
+  "Denmark": "dk",
+  "Tunisia": "tn",
+  "Ekuador": "ec", "Ecuador": "ec",
+  "Wales": "gb-wls",
+  "Ukraina": "ua", "Ukraine": "ua",
+  "Turki": "tr", "Turkey": "tr", "Türkiye": "tr", "Turkiye": "tr",
+  "Swedia": "se", "Sweden": "se",
+  "Austria": "at",
+  "Hongaria": "hu", "Hungary": "hu",
+  "Skotlandia": "gb-sct", "Scotland": "gb-sct",
+  "Selandia Baru": "nz", "New Zealand": "nz",
+  "Peru": "pe",
+  "Cile": "cl", "Chile": "cl",
+  "Mesir": "eg", "Egypt": "eg",
+  "Nigeria": "ng",
+  "Aljazair": "dz", "Algeria": "dz",
+  "Ghana": "gh",
+  "Irak": "iq", "Iraq": "iq",
+  "Norwegia": "no", "Norway": "no",
+  "Qatar": "qa",
+  "Pantai Gading": "ci", "Ivory Coast": "ci",
+  "Haiti": "ht",
+  "Paraguay": "py",
+  "Curaçao": "cw", "Curacao": "cw",
+  "Tanjung Verde": "cv", "Cape Verde": "cv",
+  "Yordania": "jo", "Jordan": "jo",
+  "Kongo Demokratik": "cd", "Democratic Republic of the Congo": "cd", "Congo DR": "cd", "DR Congo": "cd",
+  "Uzbekistan": "uz",
+  "Panama": "pa",
+  "Tiongkok": "cn", "China": "cn",
+  "Jamaika": "jm", "Jamaica": "jm",
+  "Honduras": "hn",
+  "El Salvador": "sv",
+  "Venezuela": "ve",
+  "Bolivia": "bo",
+  "Mali": "ml",
+  "Oman": "om",
+  "Uni Emirat Arab": "ae", "United Arab Emirates": "ae", "UAE": "ae",
+  "Bahrain": "bh",
+  "Suriah": "sy", "Syria": "sy",
+  "Palestina": "ps", "Palestine": "ps",
+  "Kirgistan": "kg", "Kyrgyzstan": "kg",
+  "Tajikistan": "tj",
+  "India": "in"
+};
+
+const getFlagEmoji = (teamName: string) => {
+  let code = countryCodes[teamName];
+  if (!code) return "";
+  if (code.startsWith("gb-")) {
+    code = "gb";
+  }
+  const codePoints = code
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
+
+
+export default function OfflineCheckoutTab({
+  matches,
+  users,
+  supabase,
+  setLoading,
+  setReceiptData,
+  loadAllData,
+  getFlagUrl,
+}: OfflineCheckoutTabProps) {
+  const [waNumber, setWaNumber] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isExistingUser, setIsExistingUser] = useState(false);
+  const [selectedMatchId, setSelectedMatchId] = useState("");
+  const [predScoreA, setPredScoreA] = useState("0");
+  const [predScoreB, setPredScoreB] = useState("0");
+  const [offlinePredictions, setOfflinePredictions] = useState<any[]>([]);
+  const [matchSearchQuery, setMatchSearchQuery] = useState("");
+  const [isOpenMatchSelect, setIsOpenMatchSelect] = useState(false);
+
+  const selectedMatch = matches.find((m) => m.id === selectedMatchId);
+
+  // WhatsApp Auto-Lookup
+  useEffect(() => {
+    if (waNumber.length >= 9) {
+      const cleanPhone = waNumber.trim().replace(/[-+ ]/g, "");
+      const matchProfile = users.find((u) => u.phone_number === cleanPhone);
+      if (matchProfile) {
+        setFullName(matchProfile.name);
+        setIsExistingUser(true);
+      } else {
+        setIsExistingUser(false);
+      }
+    } else {
+      setIsExistingUser(false);
+    }
+  }, [waNumber, users]);
+
+  // Reset score inputs when selected match changes
+  useEffect(() => {
+    setPredScoreA("0");
+    setPredScoreB("0");
+  }, [selectedMatchId]);
+
+
+  // Handle Offline Prediction Basket
+  const addOfflinePrediction = () => {
+    if (!selectedMatchId) {
+      alert("Pilih pertandingan terlebih dahulu.");
+      return;
+    }
+    const match = matches.find((m) => m.id === selectedMatchId);
+    if (!match) return;
+
+    const parsedScoreA = Math.max(0, Math.min(10, parseInt(predScoreA) || 0));
+    const parsedScoreB = Math.max(0, Math.min(10, parseInt(predScoreB) || 0));
+
+    // Cek duplikasi skor di dalam keranjang saat ini
+    const isDuplicateBasket = offlinePredictions.some(
+      (p) =>
+        p.matchId === selectedMatchId &&
+        p.score_a === parsedScoreA &&
+        p.score_b === parsedScoreB
+    );
+    if (isDuplicateBasket) {
+      alert(
+        `Gagal: Tebakan skor ${parsedScoreA} - ${parsedScoreB} untuk laga ini sudah ada di dalam keranjang.`
+      );
+      return;
+    }
+
+    // Hitung berapa tebakan untuk laga ini di basket saat ini
+    const countForMatch = offlinePredictions.filter((p) => p.matchId === selectedMatchId).length;
+    if (countForMatch >= 5) {
+      alert("Maksimal 5 tebakan per pertandingan untuk warga.");
+      return;
+    }
+
+    setOfflinePredictions([
+      ...offlinePredictions,
+      {
+        matchId: selectedMatchId,
+        team_a: match.team_a,
+        team_b: match.team_b,
+        stage: match.stage,
+        score_a: parsedScoreA,
+        score_b: parsedScoreB,
+      },
+    ]);
+  };
+
+  const removeOfflinePrediction = (idx: number) => {
+    const updated = [...offlinePredictions];
+    updated.splice(idx, 1);
+    setOfflinePredictions(updated);
+  };
+
+  // Submit Offline Checkout
+  const handleOfflineCheckout = async () => {
+    if (!fullName.trim() || !waNumber.trim()) {
+      alert("Nama dan Nomor WhatsApp wajib diisi.");
+      return;
+    }
+    if (offlinePredictions.length === 0) {
+      alert("Keranjang tebakan kosong.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cleanPhone = waNumber.trim().replace(/[-+ ]/g, "");
+      let userId: string;
+
+      // 1. Dapatkan / Buat Profil
+      const matchProfile = users.find((u) => u.phone_number === cleanPhone);
+      if (matchProfile) {
+        userId = matchProfile.id;
+      } else {
+        // Buat profil offline baru (auth_user_id null)
+        const { data: newProfile, error: profileErr } = await supabase
+          .from("profiles")
+          .insert({
+            name: fullName.trim(),
+            phone_number: cleanPhone,
+            role: "user",
+          })
+          .select()
+          .single();
+        if (profileErr) throw profileErr;
+        userId = newProfile.id;
+      }
+
+      // 1.5 Cek duplikasi tebakan dengan database untuk warga ini
+      for (const p of offlinePredictions) {
+        const { data: existingPreds, error: checkErr } = await supabase
+          .from("predictions")
+          .select(`
+            id,
+            predicted_score_a,
+            predicted_score_b,
+            transactions (
+              payment_status
+            )
+          `)
+          .eq("user_id", userId)
+          .eq("match_id", p.matchId);
+
+        if (!checkErr && existingPreds) {
+          const isDuplicateDb = existingPreds.some(
+            (dbPred: any) =>
+              dbPred.predicted_score_a === p.score_a &&
+              dbPred.predicted_score_b === p.score_b &&
+              dbPred.transactions?.payment_status !== "failed"
+          );
+          if (isDuplicateDb) {
+            alert(
+              `Gagal: Warga "${fullName}" sudah pernah mendaftarkan tebakan skor ${p.score_a} - ${p.score_b} untuk laga ${p.team_a} vs ${p.team_b} sebelumnya.`
+            );
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      // 2. Buat Transaksi
+      const amount = offlinePredictions.length * 10000;
+      const { data: newTx, error: txErr } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: userId,
+          amount,
+          payment_status: "paid",
+          payment_method: "cash",
+          transaction_reference: `OFFLINE-BY-ADMIN`,
+        })
+        .select()
+        .single();
+      if (txErr) throw txErr;
+
+      // 3. Masukkan Prediksi
+      const predictionsPayload = offlinePredictions.map((p) => ({
+        user_id: userId,
+        match_id: p.matchId,
+        predicted_score_a: p.score_a,
+        predicted_score_b: p.score_b,
+        transaction_id: newTx.id,
+      }));
+
+      const { error: predErr } = await supabase.from("predictions").insert(predictionsPayload);
+      if (predErr) throw predErr;
+
+      alert("Transaksi tunai sukses terdaftar!");
+
+      // Load print receipt
+      const receiptTx = {
+        id: newTx.id,
+        amount,
+        payment_status: "paid",
+        payment_method: "cash",
+        created_at: newTx.created_at,
+        profiles: { name: fullName, phone_number: cleanPhone },
+      };
+      const receiptPreds = offlinePredictions.map((p) => ({
+        match_id: p.matchId,
+        team_a: p.team_a,
+        team_b: p.team_b,
+        predicted_score_a: p.score_a,
+        predicted_score_b: p.score_b,
+        stage: p.stage,
+      }));
+
+      // Set & triggers print
+      setReceiptData({ transaction: receiptTx, predictions: receiptPreds });
+      setTimeout(() => {
+        window.print();
+      }, 500);
+
+      // Reset Form
+      setWaNumber("");
+      setFullName("");
+      setOfflinePredictions([]);
+      await loadAllData();
+    } catch (err: any) {
+      console.error("Offline checkout failed:", err);
+      alert(err.message || "Gagal memproses transaksi offline.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Form Input Data Warga & Tambah Tebakan */}
+      <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold flex items-center space-x-2 border-b border-border pb-3">
+          <Plus className="h-5 w-5 text-primary" />
+          <span>Form Input Prediksi Tunai Offline</span>
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+              Nomor WhatsApp Warga
+            </label>
+            <input
+              type="tel"
+              required
+              placeholder="0812xxxxxxxx"
+              value={waNumber}
+              onChange={(e) => setWaNumber(e.target.value)}
+              className="block w-full px-3 py-2 bg-background border border-input rounded-lg text-sm placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground block mb-1.5 flex justify-between">
+              <span>Nama Lengkap Warga</span>
+              {isExistingUser && (
+                <span className="text-[10px] text-green-500 font-bold bg-green-500/10 px-1.5 rounded uppercase">
+                  Warga Terdaftar
+                </span>
+              )}
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Nama Lengkap"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              disabled={isExistingUser}
+              className="block w-full px-3 py-2 bg-background border border-input rounded-lg text-sm placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary text-foreground disabled:opacity-60"
+            />
+          </div>
+        </div>
+
+        <div className="border-t border-border/50 pt-6 space-y-4">
+          <h4 className="font-bold text-sm">Pilih & Masukkan Skor Tebakan</h4>
+          <div className="space-y-4">
+            {/* Pilih Pertandingan */}
+            <div className="space-y-2 relative">
+              <label className="text-[10px] font-semibold text-muted-foreground block">
+                Pertandingan
+              </label>
+
+              {/* Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsOpenMatchSelect(!isOpenMatchSelect)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-background border border-input rounded-lg text-xs text-foreground focus:ring-2 focus:ring-primary focus:outline-none text-left h-10 shadow-sm hover:bg-muted/10 transition-colors"
+              >
+                {selectedMatch ? (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-muted-foreground font-semibold mr-2 shrink-0 text-[10px]">
+                      [{selectedMatch.stage}]
+                    </span>
+                    <div className="flex items-center space-x-2 flex-1 justify-center">
+                      <div className="flex items-center space-x-1.5">
+                        {getFlagUrl && getFlagUrl(selectedMatch.team_a) && (
+                          <img
+                            src={getFlagUrl(selectedMatch.team_a)!}
+                            alt=""
+                            className="w-5 h-3 object-cover rounded border border-border/20"
+                          />
+                        )}
+                        <span className="font-bold">{selectedMatch.team_a}</span>
+                      </div>
+                      <span className="text-muted-foreground text-[10px]">vs</span>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-bold">{selectedMatch.team_b}</span>
+                        {getFlagUrl && getFlagUrl(selectedMatch.team_b) && (
+                          <img
+                            src={getFlagUrl(selectedMatch.team_b)!}
+                            alt=""
+                            className="w-5 h-3 object-cover rounded border border-border/20"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">-- Pilih Pertandingan --</span>
+                )}
+                <span className="ml-2 text-muted-foreground text-[8px]">▼</span>
+              </button>
+
+              {/* Floating Dropdown Overlay */}
+              {isOpenMatchSelect && (
+                <>
+                  {/* Backdrop click to close */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsOpenMatchSelect(false)}
+                  />
+
+                  <div className="absolute left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-20 flex flex-col max-h-64 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                    {/* Search inside dropdown */}
+                    <div className="p-2 border-b border-border bg-muted/40">
+                      <input
+                        type="text"
+                        placeholder="Ketik untuk mencari negara..."
+                        autoFocus
+                        value={matchSearchQuery}
+                        onChange={(e) => setMatchSearchQuery(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-background border border-input rounded text-xs placeholder-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                      />
+                    </div>
+
+                    {/* Scrollable list */}
+                    <div className="overflow-y-auto flex-1 py-1">
+                      {matches
+                        .filter((m) => m.status === "scheduled")
+                        .filter((m) => {
+                          const q = matchSearchQuery.toLowerCase().trim();
+                          return (
+                            !q ||
+                            m.team_a.toLowerCase().includes(q) ||
+                            m.team_b.toLowerCase().includes(q) ||
+                            m.stage.toLowerCase().includes(q)
+                          );
+                        }).length === 0 ? (
+                        <div className="text-center py-6 text-xs text-muted-foreground">
+                          Pertandingan tidak ditemukan.
+                        </div>
+                      ) : (
+                        matches
+                          .filter((m) => m.status === "scheduled")
+                          .filter((m) => {
+                            const q = matchSearchQuery.toLowerCase().trim();
+                            return (
+                              !q ||
+                              m.team_a.toLowerCase().includes(q) ||
+                              m.team_b.toLowerCase().includes(q) ||
+                              m.stage.toLowerCase().includes(q)
+                            );
+                          })
+                          .map((m) => {
+                            const flagA = getFlagUrl ? getFlagUrl(m.team_a) : null;
+                            const flagB = getFlagUrl ? getFlagUrl(m.team_b) : null;
+                            const formattedDate = new Date(m.match_time)
+                              .toLocaleString("id-ID", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                              .replace(/\./g, ":");
+
+                            return (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedMatchId(m.id);
+                                  setIsOpenMatchSelect(false);
+                                  setMatchSearchQuery("");
+                                }}
+                                className={`w-full text-left px-3 py-2 hover:bg-primary/10 flex items-center justify-between text-xs transition-colors border-b border-border/20 last:border-0 ${
+                                  selectedMatchId === m.id ? "bg-primary/5 font-bold" : ""
+                                }`}
+                              >
+                                <div className="flex flex-col space-y-1.5 flex-1">
+                                  <div className="flex justify-between items-center text-[9px] text-muted-foreground font-semibold">
+                                    <span className="uppercase">{m.stage}</span>
+                                    <span>{formattedDate} WIB</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    {flagA && (
+                                      <img
+                                        src={flagA}
+                                        alt=""
+                                        className="w-5 h-3 object-cover rounded border border-border/20 shrink-0"
+                                      />
+                                    )}
+                                    <span className="text-foreground">{m.team_a}</span>
+                                    <span className="text-muted-foreground text-[9px]">vs</span>
+                                    <span className="text-foreground">{m.team_b}</span>
+                                    {flagB && (
+                                      <img
+                                        src={flagB}
+                                        alt=""
+                                        className="w-5 h-3 object-cover rounded border border-border/20 shrink-0"
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Input Skor Visual dengan Bendera & Nama Tim */}
+            {selectedMatch && (
+              <div className="bg-background/40 border border-border/50 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* Team A Info */}
+                <div className="flex items-center space-x-3 w-full sm:w-[40%] justify-end text-right">
+                  <span className="font-bold text-sm text-foreground">{selectedMatch.team_a}</span>
+                  {getFlagUrl && getFlagUrl(selectedMatch.team_a) ? (
+                    <img
+                      src={getFlagUrl(selectedMatch.team_a)!}
+                      alt=""
+                      className="w-8 h-5 object-cover rounded shadow border border-border/10 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-5 bg-muted rounded border border-border flex items-center justify-center shrink-0" />
+                  )}
+                </div>
+
+                {/* Score Input Fields */}
+                <div className="flex items-center space-x-2 shrink-0">
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={predScoreA}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                      setPredScoreA(val.toString());
+                    }}
+                    className="w-12 h-9 text-center bg-background border border-input rounded-lg text-sm font-black text-foreground focus:ring-2 focus:ring-primary"
+                  />
+                  <span className="text-muted-foreground font-black">-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={predScoreB}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                      setPredScoreB(val.toString());
+                    }}
+                    className="w-12 h-9 text-center bg-background border border-input rounded-lg text-sm font-black text-foreground focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {/* Team B Info */}
+                <div className="flex items-center space-x-3 w-full sm:w-[40%] justify-start text-left">
+                  {getFlagUrl && getFlagUrl(selectedMatch.team_b) ? (
+                    <img
+                      src={getFlagUrl(selectedMatch.team_b)!}
+                      alt=""
+                      className="w-8 h-5 object-cover rounded shadow border border-border/10 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-5 bg-muted rounded border border-border flex items-center justify-center shrink-0" />
+                  )}
+                  <span className="font-bold text-sm text-foreground">{selectedMatch.team_b}</span>
+                </div>
+
+                {/* Add to Cart button */}
+                <div className="w-full sm:w-auto flex justify-center pt-2 sm:pt-0">
+                  <Button onClick={addOfflinePrediction} className="w-full sm:w-auto font-bold h-9">
+                    Tambah
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Keranjang Checkout Tunai */}
+      <div className="rounded-xl border border-border bg-card p-6 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold flex items-center space-x-2 border-b border-border pb-3">
+          <span>Keranjang Tebakan Tunai</span>
+        </h3>
+
+        {offlinePredictions.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground text-xs">
+            Keranjang kosong. Tambahkan prediksi di sebelah kiri.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {offlinePredictions.map((pred, idx) => {
+                const flagA = getFlagUrl ? getFlagUrl(pred.team_a) : null;
+                const flagB = getFlagUrl ? getFlagUrl(pred.team_b) : null;
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col bg-background/50 p-2.5 rounded-lg border border-border/30 text-xs gap-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      {/* Team A & Flag */}
+                      <div className="flex items-center space-x-1.5 w-[38%] justify-end text-right">
+                        <span className="font-bold truncate text-[10px] sm:text-xs text-foreground">
+                          {pred.team_a}
+                        </span>
+                        {flagA ? (
+                          <img src={flagA} alt="" className="w-5 h-3.5 object-cover rounded shadow-xs border border-border/10 shrink-0" />
+                        ) : (
+                          <div className="w-5 h-3.5 bg-muted rounded border border-border shrink-0" />
+                        )}
+                      </div>
+
+                      {/* Scores & VS */}
+                      <div className="flex items-center space-x-1 justify-center shrink-0">
+                        <span className="font-mono font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded text-xs">
+                          {pred.score_a}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground font-semibold">vs</span>
+                        <span className="font-mono font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded text-xs">
+                          {pred.score_b}
+                        </span>
+                      </div>
+
+                      {/* Team B & Flag */}
+                      <div className="flex items-center space-x-1.5 w-[38%] justify-start text-left">
+                        {flagB ? (
+                          <img src={flagB} alt="" className="w-5 h-3.5 object-cover rounded shadow-xs border border-border/10 shrink-0" />
+                        ) : (
+                          <div className="w-5 h-3.5 bg-muted rounded border border-border shrink-0" />
+                        )}
+                        <span className="font-bold truncate text-[10px] sm:text-xs text-foreground">
+                          {pred.team_b}
+                        </span>
+                      </div>
+
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeOfflinePrediction(idx)}
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10 shrink-0 ml-1"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="text-muted-foreground text-[8px] font-semibold text-center uppercase tracking-wide border-t border-border/20 pt-1">
+                      {pred.stage}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-border pt-4 space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Nama Warga:</span>
+                <span className="font-bold text-foreground">{fullName || "-"}</span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Total Tebakan:</span>
+                <span>{offlinePredictions.length} Item</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold pt-2 border-t border-border/40">
+                <span>Total Tunai Diterima:</span>
+                <span className="text-primary text-base">
+                  Rp {(offlinePredictions.length * 10000).toLocaleString("id-ID")}
+                </span>
+              </div>
+            </div>
+
+            <Button onClick={handleOfflineCheckout} className="w-full mt-2">
+              Bayar Tunai & Cetak Struk
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

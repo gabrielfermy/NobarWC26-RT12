@@ -54,31 +54,31 @@
     --card-foreground: oklch(0.98 0.01 220);
     --popover: oklch(0.14 0.01 220);
     --popover-foreground: oklch(0.98 0.01 220);
-    --primary: oklch(0.80 0.25 145); /* Vibrant Electric Grass Green (#00f076 / Mexico vibe) */
-    --primary-foreground: oklch(0.12 0.01 220);
-    --secondary: oklch(0.55 0.22 15); /* Crimson Red (#e11d48 / Canada vibe) */
+    --primary: oklch(0.65 0.25 45); /* Orange shade from the official logo */
+    --primary-foreground: oklch(0.98 0.01 220);
+    --secondary: oklch(0.25 0.02 220); 
     --secondary-foreground: oklch(0.98 0.01 220);
     --muted: oklch(0.25 0.02 220);
     --muted-foreground: oklch(0.70 0.02 220);
-    --accent: oklch(0.75 0.18 85); /* Gold Trophy Yellow (#eab308 / USA & Trophy vibe) */
+    --accent: oklch(0.75 0.18 85); /* Gold Trophy Yellow */
     --accent-foreground: oklch(0.12 0.01 220);
     --destructive: oklch(0.60 0.22 25);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.80 0.25 145);
-    --chart-1: oklch(0.80 0.25 145);
-    --chart-2: oklch(0.55 0.22 15);
-    --chart-3: oklch(0.75 0.18 85);
+    --ring: oklch(0.65 0.25 45);
+    --chart-1: oklch(0.65 0.25 45);
+    --chart-2: oklch(0.75 0.18 85);
+    --chart-3: oklch(0.70 0.02 220);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
     --sidebar: oklch(0.14 0.01 220);
     --sidebar-foreground: oklch(0.98 0.01 220);
-    --sidebar-primary: oklch(0.80 0.25 145);
-    --sidebar-primary-foreground: oklch(0.12 0.01 220);
+    --sidebar-primary: oklch(0.65 0.25 45);
+    --sidebar-primary-foreground: oklch(0.98 0.01 220);
     --sidebar-accent: oklch(0.25 0.02 220);
     --sidebar-accent-foreground: oklch(0.98 0.01 220);
     --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.80 0.25 145);
+    --sidebar-ring: oklch(0.65 0.25 45);
   }
   * {
     border-color: var(--border);
