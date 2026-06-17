@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 };
 
 import { Navbar } from "@/components/Navbar";
+import { AutoLogoutProvider } from "@/components/AutoLogoutProvider";
 import Link from "next/link";
 import Script from "next/script";
 
@@ -41,7 +42,9 @@ export default function RootLayout({
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            {children}
+            <AutoLogoutProvider>
+              {children}
+            </AutoLogoutProvider>
           </main>
           <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground space-y-3">
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 font-medium">

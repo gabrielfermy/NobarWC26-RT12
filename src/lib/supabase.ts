@@ -25,7 +25,14 @@ console.log('Supabase Init Info:', {
 });
 
 // Client standard untuk operasi normal (mengikuti aturan RLS)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 
 // Client admin untuk operasi backend khusus bypass RLS (misalnya sync data)
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
